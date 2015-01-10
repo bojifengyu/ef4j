@@ -45,11 +45,14 @@ import java.util.ArrayList;
  * 
  * @author Giulio Ermanno Pibiri
  */
-public class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotoneLongSequence implements
+public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotoneLongSequence implements
     RandomAccess, Cloneable, Serializable {
   // Serial ID number.
-  private static final long serialVersionUID = 8102012L;
+  private transient static final long serialVersionUID = 8102012L;
 
+  //Initial capacity of each index.
+  protected transient static final int INITIAL_INDEX_CAPACITY = 2;
+ 
   // Backing Elias-Fano compressed sequence. It can behave in an append-only or dynamic way.
   protected EliasFanoAppendOnlyMonotoneLongSequence s;
 
@@ -58,9 +61,6 @@ public class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotoneLongSe
 
   // Flag to mean the dynamic-mode is ON/OFF.
   protected boolean dynamic;
-
-  // Initial capacity of each index.
-  protected static final int INITIAL_INDEX_CAPACITY = 2;
 
   /**
    * Constructor for unknown initial capacity.
@@ -190,6 +190,7 @@ public class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotoneLongSe
   @Override
   public Iterator<Long> iterator(final int from, final int to) {
     if (dynamic) {
+      checkIndices(from, to);
       return new EliasFanoDynamicMonotoneLongSequenceIterator<Long>(from, to);
     }
     return s.iterator(from, to);
@@ -197,16 +198,8 @@ public class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotoneLongSe
 
   @Override
   public List<Long> subList(final int from, final int to) {
-    if (from >= length) {
-      throw new IndexOutOfBoundsException("" + from);
-    }
-    if (to >= length) {
-      throw new IndexOutOfBoundsException("" + to);
-    }
-    if (to < from) {
-      throw new IllegalArgumentException(to + " < " + from);
-    }
-
+    checkIndices(from, to);
+    
     final int B = (int) Math.sqrt(to - from + 1 << 3);
     EliasFanoDynamicMonotoneLongSequence subList = new EliasFanoDynamicMonotoneLongSequence(B);
 
@@ -271,7 +264,7 @@ public class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotoneLongSe
 
     void init(final int bucket) {
       itOverBucket =
-          s.iterator(new Integer(bucket), bucket < s.buckets ? di.sizes.getInt(bucket) : s.N);
+          s.iterator(Integer.valueOf(bucket), bucket < s.buckets ? di.sizes.getInt(bucket) : s.N);
       itOverAdds = di.indices.get(bucket).additions.iterator();
       itOverDels = di.indices.get(bucket).deletions.iterator();
       a = next(itOverBucket);
@@ -447,10 +440,9 @@ public class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotoneLongSe
     }
 
     void trimToSize() {
-      final int buckets = s.buckets;
-      for (int i = 0; i < buckets; i++) {
-        indices.get(i).additions.trimToSize();
-        indices.get(i).deletions.trimToSize();
+      for (Index i : indices) {
+        i.additions.trimToSize();
+        i.deletions.trimToSize();
       }
       indices.trimToSize();
       sizes.trimToSize();
@@ -739,5 +731,47 @@ public class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotoneLongSe
       }
       return clone;
     }
+  }
+
+  public static final void main(String[] args) throws NumberFormatException, IOException {
+    int B = 0;
+    String fileName = "";
+    String toBeAdded = "";
+
+    if (args.length != 0) {
+      B = Integer.parseInt(args[0]);
+      fileName = args[1];
+      toBeAdded = args[2];
+    }
+
+    EliasFanoDynamicMonotoneLongSequence ds = new EliasFanoDynamicMonotoneLongSequence(B);
+    File file = new File(fileName);
+    BufferedReader br = new BufferedReader(new FileReader(file));
+
+    String str;
+    while ((str = br.readLine()) != null) {
+      ds.add(Long.parseLong(str));
+    }
+    br.close();
+
+    ds.dynamize();
+
+    BufferedReader bfr = new BufferedReader(new FileReader(new File(toBeAdded)));
+    System.out.println("Adding...");
+    while ((str = bfr.readLine()) != null) {
+      ds.add(Long.parseLong(str));
+    }
+    bfr.close();
+
+    for (int i = 0; i < 1000000; i++) {
+    }
+
+    Iterator<Long> it = ds.iterator();
+    long start = System.currentTimeMillis();
+    while (it.hasNext()) {
+      it.next();
+    }
+    long end = System.currentTimeMillis();
+    System.out.println(end - start);
   }
 }

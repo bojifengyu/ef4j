@@ -29,7 +29,7 @@ public abstract class AbstractAppendOnlyMonotoneLongSequence extends AbstractMon
    * Unsupported operation since the sequence is append-only.
    */
   @Override
-  public boolean remove(final long integer) {
+  public final boolean remove(final long integer) {
     throw new UnsupportedOperationException();
   }
 
@@ -37,7 +37,7 @@ public abstract class AbstractAppendOnlyMonotoneLongSequence extends AbstractMon
    * Unsupported operation since the sequence is append-only.
    */
   @Override
-  public boolean remove(final Object o) {
+  public final boolean remove(final Object o) {
     throw new UnsupportedOperationException();
   }
 
@@ -45,7 +45,7 @@ public abstract class AbstractAppendOnlyMonotoneLongSequence extends AbstractMon
    * Unsupported operation since the sequence is append-only.
    */
   @Override
-  public Long remove(final int index) {
+  public final Long remove(final int index) {
     throw new UnsupportedOperationException();
   }
 
@@ -53,7 +53,7 @@ public abstract class AbstractAppendOnlyMonotoneLongSequence extends AbstractMon
    * Unsupported operation since the sequence is append-only.
    */
   @Override
-  public boolean removeAll(final Collection<?> c) {
+  public final boolean removeAll(final Collection<?> c) {
     throw new UnsupportedOperationException();
   }
 }

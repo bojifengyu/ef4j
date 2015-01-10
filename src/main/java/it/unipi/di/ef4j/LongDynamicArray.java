@@ -24,7 +24,7 @@ package it.unipi.di;
  * 
  * @author Giulio Ermanno Pibiri
  */
-public class LongDynamicArray {
+public final class LongDynamicArray {
   // Array of stored longs.
   protected long[] array;
 
@@ -136,10 +136,7 @@ public class LongDynamicArray {
   public void insertLong(final int index) {
     checkIndex(index);
     resize();
-    final int l = length - 1;
-    for (int i = l; i >= index; i--) {
-      array[i + 1] = array[i];
-    }
+    System.arraycopy(array, index, array, index + 1, length - index);
     length++;
   }
 
@@ -154,10 +151,7 @@ public class LongDynamicArray {
   public void removeLong(final int index) {
     checkIndex(index);
     resize();
-    final int l = length - 1;
-    for (int i = index; i < l; i++) {
-      array[i] = array[i + 1];
-    }
+    System.arraycopy(array, index + 1, array, index, length - index - 1);
     length--;
   }
 
@@ -174,10 +168,7 @@ public class LongDynamicArray {
 
   private void resize(final int capacity) {
     long[] temp = new long[capacity];
-    final int l = length;
-    for (int i = 0; i < l; i++) {
-      temp[i] = array[i];
-    }
+    System.arraycopy(array, 0, temp, 0, length);
     array = temp;
   }
 
@@ -189,11 +180,8 @@ public class LongDynamicArray {
    *         last element).
    */
   public long[] toArray() {
-    final int length = this.length;
     long[] temp = new long[length];
-    for (int i = 0; i < length; i++) {
-      temp[i] = array[i];
-    }
+    System.arraycopy(array, 0, temp, 0, length);
     return temp;
   }
 

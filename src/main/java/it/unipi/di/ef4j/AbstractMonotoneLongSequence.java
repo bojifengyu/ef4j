@@ -36,7 +36,7 @@ public abstract class AbstractMonotoneLongSequence implements List<Long> {
    * 
    * @param length the length of the sequence.
    */
-  protected void setLength(final int length) {
+  protected final void setLength(final int length) {
     this.length = length;
   }
 
@@ -62,12 +62,30 @@ public abstract class AbstractMonotoneLongSequence implements List<Long> {
    * @param to the ending position.
    * @return the integers of the sequence in proper order from <tt>from</tt> to <tt>to</tt>
    *         included.
-   * @throws IllegalArgumentException if <tt>from</tt> > <tt>to</tt>.
-   * @throws IndexOutOfBoundsException if bounds are incorrect.
    * @see java.util.Iterator
    */
   public abstract Iterator<Long> iterator(final int from, final int to);
 
+  /**
+   * Checks for proper indices.
+   * 
+   * @param from the starting position.
+   * @param to the ending position.
+   * @throws IllegalArgumentException if <tt>from</tt> > <tt>to</tt>.
+   * @throws IndexOutOfBoundsException if bounds are incorrect.
+   */
+  public final void checkIndices(final int from, final int to) {
+    if (from >= length) {
+      throw new IndexOutOfBoundsException("" + from);
+    }
+    if (to >= length) {
+      throw new IndexOutOfBoundsException("" + to);
+    }
+    if (from > to) {
+      throw new IllegalArgumentException(to + " < " + from);
+    }
+  }
+  
   /**
    * Add new integer to the sequence in proper position.
    * 
@@ -82,7 +100,7 @@ public abstract class AbstractMonotoneLongSequence implements List<Long> {
    * @param c the collection of integers to be added.
    */
   @Override
-  public boolean addAll(final Collection<? extends Long> c) {
+  public final boolean addAll(final Collection<? extends Long> c) {
     for (Long i : c) {
       add(i);
     }
@@ -141,7 +159,7 @@ public abstract class AbstractMonotoneLongSequence implements List<Long> {
    * @return <tt>true</tt> if the integer is present; <tt>false</tt> otherwise.
    */
   @Override
-  public boolean contains(final Object o) {
+  public final boolean contains(final Object o) {
     final long integer = (Long) o;
     return nextGEQ(integer) == integer;
   }
@@ -153,7 +171,7 @@ public abstract class AbstractMonotoneLongSequence implements List<Long> {
    * @return <tt>true</tt> if all integers in <tt>c</tt> are present; <tt>false</tt> otherwise.
    */
   @Override
-  public boolean containsAll(final Collection<?> c) {
+  public final boolean containsAll(final Collection<?> c) {
     for (Object o : c) {
       if (!this.contains(o)) {
         return false;
@@ -175,13 +193,13 @@ public abstract class AbstractMonotoneLongSequence implements List<Long> {
    *         last element).
    */
   @Override
-  public Long[] toArray() {
-    Long[] result = new Long[length];
+  public final Long[] toArray() {
+    Long[] temp = new Long[length];
     int i = 0;
     for (Long integer : this) {
-      result[i++] = integer;
+      temp[i++] = integer;
     }
-    return result;
+    return temp;
   }
 
   /**
@@ -210,7 +228,7 @@ public abstract class AbstractMonotoneLongSequence implements List<Long> {
    * @return <tt>true</tt> if the sequence is empty; <tt>false</tt> otherwise.
    */
   @Override
-  public boolean isEmpty() {
+  public final boolean isEmpty() {
     return length == 0;
   }
 
@@ -220,7 +238,7 @@ public abstract class AbstractMonotoneLongSequence implements List<Long> {
    * @return the current length of the sequence.
    */
   @Override
-  public int size() {
+  public final int size() {
     return length;
   }
 
@@ -232,7 +250,7 @@ public abstract class AbstractMonotoneLongSequence implements List<Long> {
    *         sequence; -1 otherwise.
    */
   @Override
-  public int indexOf(Object o) {
+  public final int indexOf(Object o) {
     Iterator<Long> it = this.iterator();
     int index = 0;
     while (it.hasNext()) {
@@ -252,7 +270,7 @@ public abstract class AbstractMonotoneLongSequence implements List<Long> {
    *         sequence; -1 otherwise.
    */
   @Override
-  public int lastIndexOf(Object o) {
+  public final int lastIndexOf(Object o) {
     final int index = indexOf(o);
     if (index == -1) {
       return -1;

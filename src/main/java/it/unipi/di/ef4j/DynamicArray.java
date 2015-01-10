@@ -27,7 +27,7 @@ import java.util.NoSuchElementException;
  *
  * @author Giulio Ermanno Pibiri
  */
-public class DynamicArray<E> implements Collection<E>, Iterable<E> {
+public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
   // Array of stored elements.
   protected E[] array;
 
@@ -66,6 +66,11 @@ public class DynamicArray<E> implements Collection<E>, Iterable<E> {
     this.maxCapacity = maxCapacity;
   }
 
+  private void checkIsNull(final E[] array) {
+    if (array == null) {
+      throw new NullPointerException("Specified array must be non-null.");
+    }
+  }
   /**
    * Constructor for an initial array specification.
    * 
@@ -73,10 +78,7 @@ public class DynamicArray<E> implements Collection<E>, Iterable<E> {
    * @throws NullPointerException if the specified array is <tt>null</tt>.
    */
   public DynamicArray(final E[] array) {
-    if (array == null) {
-      throw new NullPointerException("Specified array must be non-null.");
-    }
-
+    checkIsNull(array);
     this.array = array;
     length = array.length;
     this.maxCapacity = Integer.MAX_VALUE;
@@ -92,9 +94,7 @@ public class DynamicArray<E> implements Collection<E>, Iterable<E> {
    *         length.
    */
   public DynamicArray(final E[] array, final int maxCapacity) {
-    if (array == null) {
-      throw new NullPointerException("Specified array must be non-null.");
-    }
+    checkIsNull(array);
     if (array.length > maxCapacity) {
       throw new IllegalArgumentException(
           "Maximum capacity must be greater or equal to the specified array length.");
@@ -157,7 +157,6 @@ public class DynamicArray<E> implements Collection<E>, Iterable<E> {
     if (to < from) {
       throw new IllegalArgumentException(to + " < " + from);
     }
-
     return new AppendOnlyArrayIterator(from, to);
   }
 
@@ -258,7 +257,7 @@ public class DynamicArray<E> implements Collection<E>, Iterable<E> {
       throw new IndexOutOfBoundsException("" + index);
     }
   }
-
+  
   /**
    * Add a new item to the array at the given position. Shifts any subsequent elements to the right
    * (add one to their indices).
@@ -271,10 +270,7 @@ public class DynamicArray<E> implements Collection<E>, Iterable<E> {
   public boolean add(final int index, final E item) {
     checkIndex(index);
     resize();
-    final int l = length - 1;
-    for (int i = l; i >= index; i--) {
-      array[i + 1] = array[i];
-    }
+    System.arraycopy(array, index, array, index + 1, length - index);
     array[index] = item;
     length++;
     return true;
@@ -291,10 +287,7 @@ public class DynamicArray<E> implements Collection<E>, Iterable<E> {
   public boolean remove(final int index) {
     checkIndex(index);
     resize();
-    final int l = length - 1;
-    for (int i = index; i < l; i++) {
-      array[i] = array[i + 1];
-    }
+    System.arraycopy(array, index + 1, array, index, length - index - 1);
     length--;
     array[length] = null; // avoids loitering
     return true;
@@ -329,9 +322,7 @@ public class DynamicArray<E> implements Collection<E>, Iterable<E> {
   @SuppressWarnings("unchecked")
   private void resize(final int capacity) {
     E[] temp = (E[]) new Object[capacity];
-    for (int i = 0; i < length; i++) {
-      temp[i] = array[i];
-    }
+    System.arraycopy(array, 0, temp, 0, length);
     array = temp;
   }
 
@@ -371,16 +362,13 @@ public class DynamicArray<E> implements Collection<E>, Iterable<E> {
   @SuppressWarnings("unchecked")
   @Override
   public E[] toArray() {
-    final int length = this.length;
-    E[] result = (E[]) new Object[length];
-    for (int i = 0; i < length; i++) {
-      result[i] = array[i];
-    }
-    return result;
+    E[] temp = (E[]) new Object[length];
+    System.arraycopy(array, 0, temp, 0, length);
+    return temp;
   }
 
   /**
-   * Print all the items in the collection.
+   * Print all the items in the collection. Useful for debugging.
    */
   public void print() {
     final int length = this.length;

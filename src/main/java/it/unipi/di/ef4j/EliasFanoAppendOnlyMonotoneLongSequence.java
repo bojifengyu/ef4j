@@ -44,10 +44,10 @@ import it.unimi.dsi.sux4j.bits.SimpleSelect;
  * 
  * @author Giulio Ermanno Pibiri
  */
-public class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppendOnlyMonotoneLongSequence
+public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppendOnlyMonotoneLongSequence
     implements RandomAccess, Cloneable, Serializable {
   // Serial ID number.
-  private static final long serialVersionUID = 13071990L;
+  private transient static final long serialVersionUID = 13071990L;
 
   // Size of a bucket.
   protected int B;
@@ -75,19 +75,19 @@ public class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppendOnlyM
   protected LongDynamicArray info;
 
   // Bitmask to extract lower bits.
-  protected static final long LOWER_BITS_MASK = (1L << 6) - 1;
+  protected transient static final long LOWER_BITS_MASK = (1L << 6) - 1;
 
   // Bitmask to extract upper bounds.
-  protected static final long UPPER_BITS_MASK = ~LOWER_BITS_MASK;
+  protected transient static final long UPPER_BITS_MASK = ~LOWER_BITS_MASK;
 
   /**
    * Constructor for unknown initial capacity.
    * 
    * @param B the chosen bucket size.
-   * @throws IllegalArgumentException if <tt>B</tt> is negative or zero.
+   * @throws IllegalArgumentException if <tt>B</tt> is zero.
    */
   public EliasFanoAppendOnlyMonotoneLongSequence(final int B) {
-    if (B <= 0) {
+    if (B == 0) {
       throw new IllegalArgumentException("Bucket size must be greater than 0.");
     }
 
@@ -107,11 +107,11 @@ public class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppendOnlyM
    * 
    * @param B the chosen bucket size.
    * @param capacity the initial capacity.
-   * @throws IllegalArgumentException if <tt>B</tt> is negative or zero.
+   * @throws IllegalArgumentException if <tt>B</tt> is zero.
    * @throws IllegalArgumentException if <tt>capacity</tt> is less than <tt>B</tt>.
    */
   public EliasFanoAppendOnlyMonotoneLongSequence(final int B, final int capacity) {
-    if (B <= 0) {
+    if (B == 0) {
       throw new IllegalArgumentException("Bucket size must be greater than 0.");
     }
     if (capacity < B) {
@@ -130,7 +130,7 @@ public class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppendOnlyM
     info.addLong(0L);
     buckets = 0;
   }
-
+  
   @Override
   public void clear() {
     length = 0;
@@ -150,16 +150,7 @@ public class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppendOnlyM
 
   @Override
   public Iterator<Long> iterator(final int from, final int to) {
-    if (from >= length) {
-      throw new IndexOutOfBoundsException("" + from);
-    }
-    if (to >= length) {
-      throw new IndexOutOfBoundsException("" + to);
-    }
-    if (to < from) {
-      throw new IllegalArgumentException(to + " < " + from);
-    }
-
+    checkIndices(from, to);
     return new EliasFanoAppendOnlyMonotoneLongSequenceIterator<Long>(from, to);
   }
 
@@ -414,16 +405,7 @@ public class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppendOnlyM
 
   @Override
   public List<Long> subList(final int from, final int to) {
-    if (from >= length) {
-      throw new IndexOutOfBoundsException("" + from);
-    }
-    if (to >= length) {
-      throw new IndexOutOfBoundsException("" + to);
-    }
-    if (to < from) {
-      throw new IllegalArgumentException(to + " < " + from);
-    }
-
+    checkIndices(from, to);
     final int B = (int) Math.ceil(Math.sqrt(length << 3));
     final int length = to - from >= B ? to - from : B;
 
@@ -453,11 +435,8 @@ public class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppendOnlyM
   @Override
   public void trimToSize() {
     if (N < B) {
-      final int N = this.N;
       long[] temp = new long[N];
-      for (int i = 0; i < N; i++) {
-        temp[i] = buffer[i];
-      }
+      System.arraycopy(buffer, 0, temp, 0, N);
       buffer = temp;
     }
     selectors.trimToSize();

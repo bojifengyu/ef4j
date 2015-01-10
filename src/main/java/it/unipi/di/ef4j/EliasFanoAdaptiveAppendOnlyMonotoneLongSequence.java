@@ -39,10 +39,10 @@ import it.unimi.dsi.bits.Fast;
  * 
  * @author Giulio Ermanno Pibiri
  */
-public class EliasFanoAdaptiveAppendOnlyMonotoneLongSequence extends
+public final class EliasFanoAdaptiveAppendOnlyMonotoneLongSequence extends
     AbstractAppendOnlyMonotoneLongSequence implements RandomAccess, Cloneable, Serializable {
   // Serial ID number.
-  private static final long serialVersionUID = 26092009L;
+  private transient static final long serialVersionUID = 26092009L;
 
   // Initial bucket size.
   protected int B0;
@@ -148,16 +148,7 @@ public class EliasFanoAdaptiveAppendOnlyMonotoneLongSequence extends
 
   @Override
   public Iterator<Long> iterator(final int from, final int to) {
-    if (from >= length) {
-      throw new IndexOutOfBoundsException("" + from);
-    }
-    if (to >= length) {
-      throw new IndexOutOfBoundsException("" + to);
-    }
-    if (to < from) {
-      throw new IllegalArgumentException(to + " < " + from);
-    }
-
+    checkIndices(from, to);
     return new EliasFanoAdaptiveAppendOnlyMonotoneLongSequenceIterator<Long>(from, to);
   }
 
@@ -298,15 +289,7 @@ public class EliasFanoAdaptiveAppendOnlyMonotoneLongSequence extends
 
   @Override
   public List<Long> subList(final int from, final int to) {
-    if (from >= length) {
-      throw new IndexOutOfBoundsException("" + from);
-    }
-    if (to >= length) {
-      throw new IndexOutOfBoundsException("" + to);
-    }
-    if (to < from) {
-      throw new IllegalArgumentException(to + " < " + from);
-    }
+    checkIndices(from, to);
 
     EliasFanoAdaptiveAppendOnlyMonotoneLongSequence subList =
         new EliasFanoAdaptiveAppendOnlyMonotoneLongSequence();

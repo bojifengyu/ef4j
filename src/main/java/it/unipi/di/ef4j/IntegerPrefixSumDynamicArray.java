@@ -24,13 +24,12 @@ package it.unipi.di;
  *
  * @author Giulio Ermanno Pibiri
  */
-public class IntegerPrefixSumDynamicArray {
+public final class IntegerPrefixSumDynamicArray {
   // Array of stored ints.
   private int[] array;
 
   // Number of currently stored ints.
   private int length;
-
 
   /**
    * Constructor.
@@ -117,10 +116,7 @@ public class IntegerPrefixSumDynamicArray {
   }
 
   private void add(final int index, final int integer) {
-    final int l = length - 1;
-    for (int i = l; i >= index; i--) {
-      array[i + 1] = array[i];
-    }
+    System.arraycopy(array, index, array, index + 1, length - index);
     array[index] = integer;
   }
 
@@ -145,10 +141,7 @@ public class IntegerPrefixSumDynamicArray {
   }
 
   private void remove(final int index) {
-    final int l = length - 1;
-    for (int i = index; i < l; i++) {
-      array[i] = array[i + 1];
-    }
+    System.arraycopy(array, index + 1, array, index, length - index - 1);
   }
 
   private void resize() {
@@ -164,10 +157,7 @@ public class IntegerPrefixSumDynamicArray {
 
   private void resize(final int capacity) {
     int[] temp = new int[capacity];
-    final int l = length;
-    for (int i = 0; i < l; i++) {
-      temp[i] = array[i];
-    }
+    System.arraycopy(array, 0, temp, 0, length);
     array = temp;
   }
 
@@ -215,11 +205,8 @@ public class IntegerPrefixSumDynamicArray {
    *         last element).
    */
   public int[] toArray() {
-    final int length = this.length;
     int[] temp = new int[length];
-    for (int i = 0; i < length; i++) {
-      temp[i] = array[i];
-    }
+    System.arraycopy(array, 0, temp, 0, length);
     return temp;
   }
 }
