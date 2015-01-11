@@ -363,7 +363,8 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
     IntegerPrefixSumDynamicArray sizes;
     final int halfB;
     final int doubleB;
-
+    CompressedBlock cb;
+    
     DynamicIndex() {
       final int buckets = s.buckets;
       final int B = s.B;
@@ -385,6 +386,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
         indices.add(newIndex());
       }
       sizes = new IntegerPrefixSumDynamicArray(s.B, buckets);
+      cb = new CompressedBlock();
     }
 
     long get(final int index) {
@@ -465,29 +467,27 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
 
       if (isAdditionsIndexFull(index) || isBufferFull()) {
         final int B = s.B;
-
+        final int indexSize = indexSize(index);
+        
         if (bucket != s.buckets) {
-          final int curB = sizes.getInt(bucket);
-          final int newB = curB + indexSize(index); // New bucket size
-          long[] f = fusion(bucket, newB); // Fusion of bucket with index
+          final int newB = sizes.getInt(bucket) + indexSize;
+          long[] f = fusion(bucket, newB);
 
           if (newB >= doubleB) { // split in two blocks
             s.info.insertLong(bucket + 1);
-            CompressedBlock cb1 = compress(f, 0, B - 1, bucket);
+            reconstruction(f, B, bucket);
             s.info.setLong(bucket + 1, f[B - 1] << 6);
-            CompressedBlock cb2 = compress(f, B, newB - 1, bucket + 1);
-            s.lowerBits.set(bucket, cb1.lowerBitsVector.bits());
-            s.lowerBits.add(bucket + 1, cb2.lowerBitsVector.bits());
-            s.selectors.set(bucket, new SimpleSelect(cb1.upperBits));
-            s.selectors.add(bucket + 1, new SimpleSelect(cb2.upperBits));
-            sizes.setInt(bucket, B);
+            
+            compress(f, B, newB - 1, bucket + 1);
+            s.lowerBits.add(bucket + 1, cb.lowerBitsVector.bits());
+            s.selectors.add(bucket + 1, new SimpleSelect(cb.upperBits));
             sizes.addInt(bucket + 1, newB - B);
             indices.add(bucket + 1, newIndex());
           } else {
             reconstruction(f, newB, bucket);
           }
         } else {
-          final int newB = s.N + indexSize(index);
+          final int newB = s.N + indexSize;
 
           if (newB < B) {
             fusion(B); // fusion of index with buffer
@@ -515,10 +515,10 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
 
         if (isDeletionsIndexFull(index)) {
           final int B = s.B;
-
+          final int indexSize = indexSize(index);
+          
           if (bucket != s.buckets) {
-            final int curB = sizes.getInt(bucket);
-            final int newB = curB + indexSize(index);
+            final int newB = sizes.getInt(bucket) + indexSize;
             long[] f = fusion(bucket, newB);
 
             if (newB <= halfB) {
@@ -537,7 +537,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
               reconstruction(f, newB, bucket);
             }
           } else {
-            final int newB = s.N + indexSize(index);
+            final int newB = s.N + indexSize;
             fusion(B);
             s.N = newB;
           }
@@ -547,7 +547,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
     }
 
     void reconstruction(long[] f, final int to, final int bucket) {
-      CompressedBlock cb = compress(f, 0, to - 1, bucket);
+      compress(f, 0, to - 1, bucket);
       s.lowerBits.set(bucket, cb.lowerBitsVector.bits());
       s.selectors.set(bucket, new SimpleSelect(cb.upperBits));
       sizes.setInt(bucket, to);
@@ -565,7 +565,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
       return sum;
     }
 
-    CompressedBlock compress(final long[] array, final int from, final int to, final int bucket) {
+    void compress(final long[] array, final int from, final int to, final int bucket) {
       final int B = to - from + 1;
       final long lu = s.info.getLong(bucket);
       final long prevUpper = (lu & EliasFanoAppendOnlyMonotoneLongSequence.UPPER_BITS_MASK) >> 6;
@@ -593,12 +593,8 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
       }
 
       s.info.setLong(bucket, (prevUpper << 6) | l);
-
-      CompressedBlock cb = new CompressedBlock();
       cb.lowerBitsVector = lowerBitsVector;
       cb.upperBits = upperBits;
-
-      return cb;
     }
 
     boolean isBufferFull() {
@@ -663,11 +659,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
       long[] fff = fusion(f, ff);
       final int finalLength = fff.length;
 
-      CompressedBlock cb = compress(fff, 0, finalLength - 1, bucket);
-
-      s.lowerBits.set(bucket, cb.lowerBitsVector.bits());
-      s.selectors.set(bucket, new SimpleSelect(cb.upperBits));
-      sizes.setInt(bucket, finalLength);
+      reconstruction(fff, finalLength - 1, bucket);
 
       if (bucket + 1 != s.buckets) {
         s.lowerBits.remove(bucket + 1);
