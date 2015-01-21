@@ -85,7 +85,7 @@ public abstract class AbstractMonotoneLongSequence implements List<Long> {
       throw new IllegalArgumentException(to + " < " + from);
     }
   }
-  
+
   /**
    * Add new integer to the sequence in proper position.
    * 

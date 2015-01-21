@@ -67,9 +67,9 @@ public class EliasFanoAppendOnlyMonotoneLongSequenceTest {
     assertEquals(s.N, 0);
     assertTrue(s.lowerBits.isEmpty());
     assertTrue(s.selectors.isEmpty());
-    assertEquals(s.info.length(), 1);
+    assertEquals(s.info.size(), 1);
     assertEquals(s.info.capacity(), 2);
-    assertEquals(s.info.getLong(0), 0L);
+    assertEquals(s.info.array[0], 0L);
     assertEquals(s.buckets, 0);
   }
 
@@ -91,7 +91,7 @@ public class EliasFanoAppendOnlyMonotoneLongSequenceTest {
     assertEquals(s.lowerBits.capacity(), buckets);
     assertEquals(s.selectors.capacity(), buckets);
     assertEquals(s.info.capacity(), buckets);
-    assertEquals(s.info.getLong(0), 0L);
+    assertEquals(s.info.array[0], 0L);
     assertEquals(s.buckets, 0);
   }
 
@@ -137,9 +137,9 @@ public class EliasFanoAppendOnlyMonotoneLongSequenceTest {
     assertEquals(s.N, 0);
     assertTrue(s.lowerBits.isEmpty());
     assertTrue(s.selectors.isEmpty());
-    assertEquals(s.info.length(), 1);
+    assertEquals(s.info.size(), 1);
     assertEquals(s.info.capacity(), 2);
-    assertEquals(s.info.getLong(0), 0L);
+    assertEquals(s.info.array[0], 0L);
     assertEquals(s.buckets, 0);
   }
 

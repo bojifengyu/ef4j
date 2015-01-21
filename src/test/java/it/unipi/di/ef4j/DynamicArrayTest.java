@@ -39,10 +39,9 @@ public class DynamicArrayTest {
   @Test
   public void secondConstructor() {
     final int capacity = (int) (Math.random() * 100);
-    DynamicArray<Integer> array = new DynamicArray<Integer>(capacity, capacity * 100);
+    DynamicArray<Integer> array = new DynamicArray<Integer>(capacity);
     assertEquals(array.capacity(), capacity);
     assertEquals(array.length, 0);
-    assertEquals(array.maxCapacity, capacity * 100);
   }
 
   @Test
@@ -55,7 +54,7 @@ public class DynamicArrayTest {
     ints[3] = 3;
     ints[4] = 4;
 
-    DynamicArray<Integer> array = new DynamicArray<Integer>(ints, Integer.MAX_VALUE);
+    DynamicArray<Integer> array = new DynamicArray<Integer>(ints);
     assertArrayEquals(array.array, ints);
     assertEquals(array.length, ints.length);
   }
@@ -78,7 +77,7 @@ public class DynamicArrayTest {
     ints[3] = 3;
     ints[4] = 4;
 
-    DynamicArray<Integer> array = new DynamicArray<Integer>(ints, Integer.MAX_VALUE);
+    DynamicArray<Integer> array = new DynamicArray<Integer>(ints);
     array.add(1, 13);
     assertArrayEquals(array.toArray(), new Integer[] {0, 13, 1, 2, 3, 4});
     array.add(0, 7);
@@ -123,7 +122,7 @@ public class DynamicArrayTest {
   @Test
   public void testToArray() {
     Integer[] array = new Integer[] {0, 1, 2, 3, 4};
-    this.array = new DynamicArray<Integer>(array, 1200);
+    this.array = new DynamicArray<Integer>(array);
     assertArrayEquals(this.array.toArray(), array);
   }
 

@@ -26,7 +26,7 @@ package it.unipi.di;
  */
 public final class IntegerPrefixSumDynamicArray {
   // Array of stored ints.
-  private int[] array;
+  protected int[] array;
 
   // Number of currently stored ints.
   private int length;
@@ -46,26 +46,6 @@ public final class IntegerPrefixSumDynamicArray {
     }
   }
 
-  private void checkIndex(final int index) {
-    if (index >= array.length) {
-      throw new IndexOutOfBoundsException("" + index);
-    }
-  }
-
-  /**
-   * Returns the integer at a specified position as it is stored in the array, i.e. not subtracting
-   * the previous one.
-   * 
-   * @param index the index of the integer to be retrieved.
-   * @return the integer at position <tt>index</tt>.
-   * @throws IndexOutOfBoundsException if <tt>index</tt> if greater or equal to the number of
-   *         integers in the array.
-   */
-  public int get(final int index) {
-    checkIndex(index);
-    return array[index];
-  }
-
   /**
    * Returns the integer at a specified position.
    * 
@@ -75,7 +55,6 @@ public final class IntegerPrefixSumDynamicArray {
    *         integers in the array.
    */
   public int getInt(final int index) {
-    checkIndex(index);
     return index > 0 ? array[index] - array[index - 1] : array[0];
   }
 
@@ -96,16 +75,42 @@ public final class IntegerPrefixSumDynamicArray {
   }
 
   /**
+   * Increment all elements in the array by 1, starting from the element of spacified index.
+   *
+   * @param index the starting position.
+   */
+  public void incr(final int index) {
+    final int l = length;
+    for (int i = index; i < l; i++) {
+      array[i] += 1;
+    }
+  }
+
+  /**
+   * Decrement all elements in the array by 1, starting from the element of spacified index.
+   *
+   * @param index the starting position.
+   */
+  public void decr(final int index) {
+    final int l = length;
+    for (int i = index; i < l; i++) {
+      array[i] -= 1;
+    }
+  }
+
+  /**
    * Add an integer at the specified position. Shifts any subsequent elements to the right (add one
    * to their indices).
    * 
    * @param index the position of the to-be-added integer.
    * @param integer the integer value to add.
-   * @throws IndexOutOfBoundsException if <tt>index</tt> if greater or equal to the number of items
+   * @throws IndexOutOfBoundsException if <tt>index</tt> if greater than the number of items
    *         in the array.
    */
   public void addInt(final int index, final int integer) {
-    checkIndex(index);
+    if (index > array.length) {
+      throw new IndexOutOfBoundsException("" + index);
+    }
     resize();
     add(index, (index > 0 ? array[index - 1] : 0) + integer);
     final int l = length;
@@ -129,7 +134,6 @@ public final class IntegerPrefixSumDynamicArray {
    *         integers in the array.
    */
   public void removeInt(final int index) {
-    checkIndex(index);
     resize();
     final int B = getInt(index);
     remove(index);
@@ -184,7 +188,7 @@ public final class IntegerPrefixSumDynamicArray {
    * 
    * @return the number of stored items in the array.
    */
-  public int length() {
+  public int size() {
     return length;
   }
 

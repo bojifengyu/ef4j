@@ -23,15 +23,15 @@ public class LongDynamicArrayTest {
     }
     array = new LongDynamicArray();
     for (long l : longs) {
-      array.addLong(l);
+      array.add(l);
     }
   }
 
   void print(LongDynamicArray array) {
     System.out.println();
-    final int length = array.length();
+    final int length = array.size();
     for (int i = 0; i < length; i++) {
-      System.out.print(array.getLong(i) + " ");
+      System.out.print(array.array[i] + " ");
     }
   }
 
@@ -66,15 +66,15 @@ public class LongDynamicArrayTest {
   public void testAddLong() {
     randomInit();
     for (long l : longs) {
-      array.addLong(l);
+      array.add(l);
     }
     final int length = longs.length;
     final int doubleLength = length << 1;
     for (int i = 0; i < length; i++) {
-      assertEquals(array.getLong(i), longs[i]);
+      assertEquals(array.array[i], longs[i]);
     }
     for (int i = length; i < doubleLength; i++) {
-      assertEquals(array.getLong(i), longs[i - length]);
+      assertEquals(array.array[i], longs[i - length]);
     }
   }
 
@@ -83,8 +83,9 @@ public class LongDynamicArrayTest {
     randomInit();
     final int randomIndex = (int) (Math.random() * array.length);
     final long randomLong = (long) (Math.random() * 100);
-    array.setLong(randomIndex, randomLong);
-    assertEquals(array.getLong(randomIndex), randomLong);
+    array.insertLong(randomIndex);
+    array.array[randomIndex] = randomLong;
+    assertEquals(array.array[randomIndex], randomLong);
   }
 
   @Test
@@ -92,14 +93,14 @@ public class LongDynamicArrayTest {
     randomInit();
     final int length = array.length;
     for (int i = 0; i < length; i++) {
-      assertEquals(array.getLong(i), longs[i]);
+      assertEquals(array.array[i], longs[i]);
     }
   }
 
   @Test
   public void testLength() {
     randomInit();
-    assertEquals(length, array.length());
+    assertEquals(length, array.size());
   }
 
   @Test
@@ -113,12 +114,12 @@ public class LongDynamicArrayTest {
     array = new LongDynamicArray();
     longs = new long[] {0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L};
     for (long l : longs) {
-      array.addLong(l);
+      array.add(l);
     }
-    assertTrue(array.length() < array.capacity());
+    assertTrue(array.size() < array.capacity());
     final int length = longs.length;
     for (int i = 0; i < length; i++) {
-      assertEquals(array.getLong(i), longs[i]);
+      assertEquals(array.array[i], longs[i]);
     }
   }
 
@@ -127,7 +128,7 @@ public class LongDynamicArrayTest {
     array = new LongDynamicArray();
     longs = new long[] {0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L};
     for (long l : longs) {
-      array.addLong(l);
+      array.add(l);
     }
     array.insertLong(3);
     assertArrayEquals(array.toArray(), new long[] {0L, 1L, 2L, 3L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L});
@@ -153,7 +154,7 @@ public class LongDynamicArrayTest {
     array = new LongDynamicArray();
     longs = new long[] {0L, 0L, 0L, 1L, 1L, 2L, 3L, 3L, 4L, 5L, 5L, 6L, 7L, 8L, 9L, 10L, 10L};
     for (long l : longs) {
-      array.addLong(l);
+      array.add(l);
     }
     array.removeLong(1);
     assertArrayEquals(array.toArray(), new long[] {0L, 0L, 1L, 1L, 2L, 3L, 3L, 4L, 5L, 5L, 6L, 7L,

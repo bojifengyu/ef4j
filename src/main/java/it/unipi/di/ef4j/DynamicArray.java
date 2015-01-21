@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+
 /**
  * The <tt>DynamicArray</tt> class represents a resizing generic collection of items, whose
  * dimension can be <em>upper bounded</em> by a specific value. This is an utility class used in
@@ -34,9 +35,6 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
   // Number of inserted elements.
   protected int length;
 
-  // Maximum allowed capacity.
-  protected int maxCapacity;
-
   /**
    * Constructor for unknown initial capacity. Default initial capacity is fixed to 2.
    */
@@ -44,7 +42,6 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
   public DynamicArray() {
     array = (E[]) new Object[2];
     length = 0;
-    maxCapacity = Integer.MAX_VALUE;
   }
 
   /**
@@ -55,22 +52,11 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
    * @throws illegalArgumentException if the maximum capacity is less than the initial one.
    */
   @SuppressWarnings("unchecked")
-  public DynamicArray(final int capacity, final int maxCapacity) {
-    if (maxCapacity < capacity) {
-      throw new IllegalArgumentException(
-          "Maximum capacity must be at least equal to the specified initial one.");
-    }
-
+  public DynamicArray(final int capacity) {
     array = (E[]) new Object[capacity];
     length = 0;
-    this.maxCapacity = maxCapacity;
   }
 
-  private void checkIsNull(final E[] array) {
-    if (array == null) {
-      throw new NullPointerException("Specified array must be non-null.");
-    }
-  }
   /**
    * Constructor for an initial array specification.
    * 
@@ -78,31 +64,8 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
    * @throws NullPointerException if the specified array is <tt>null</tt>.
    */
   public DynamicArray(final E[] array) {
-    checkIsNull(array);
     this.array = array;
     length = array.length;
-    this.maxCapacity = Integer.MAX_VALUE;
-  }
-
-  /**
-   * Constructor for an initial array specification.
-   * 
-   * @param array the specified initial array.
-   * @param maxCapacity the specified maximum allowed capacity.
-   * @throws NullPointerException if the specified array is <tt>null</tt>.
-   * @throws IllegalArgumentException if the maximum capacity is less than the specified array
-   *         length.
-   */
-  public DynamicArray(final E[] array, final int maxCapacity) {
-    checkIsNull(array);
-    if (array.length > maxCapacity) {
-      throw new IllegalArgumentException(
-          "Maximum capacity must be greater or equal to the specified array length.");
-    }
-
-    this.array = array;
-    length = array.length;
-    this.maxCapacity = maxCapacity;
   }
 
   /**
@@ -232,15 +195,6 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
   }
 
   /**
-   * Returns the maximum allowed capacity for the array.
-   * 
-   * @return the maximum allowed capacity for the array.
-   */
-  public int maxCapacity() {
-    return maxCapacity;
-  }
-
-  /**
    * Add a new item to the end of the array. <tt>null</tt> items are permitted.
    * 
    * @param item the item to be added.
@@ -252,12 +206,6 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
     return true;
   }
 
-  private void checkIndex(final int index) {
-    if (index >= array.length) {
-      throw new IndexOutOfBoundsException("" + index);
-    }
-  }
-  
   /**
    * Add a new item to the array at the given position. Shifts any subsequent elements to the right
    * (add one to their indices).
@@ -268,7 +216,6 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
    *         in the array.
    */
   public boolean add(final int index, final E item) {
-    checkIndex(index);
     resize();
     System.arraycopy(array, index, array, index + 1, length - index);
     array[index] = item;
@@ -285,7 +232,6 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
    *         in the array.
    */
   public boolean remove(final int index) {
-    checkIndex(index);
     resize();
     System.arraycopy(array, index + 1, array, index, length - index - 1);
     length--;
@@ -308,13 +254,10 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
 
   // This routine causes a resize of the array if the current capacity hase been reached.
   private void resize() {
-    int newCapacity;
     if (length == array.length) {
-      newCapacity = array.length << 1;
-      resize(newCapacity > maxCapacity ? maxCapacity : newCapacity);
+      resize(array.length << 1);
     } else if (length > 0 && length == array.length >> 2) {
-      newCapacity = array.length >> 1;
-      resize(newCapacity);
+      resize(array.length >> 1);
     }
   }
 
@@ -335,7 +278,6 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
    *         in the array.
    */
   public void set(final int index, final E item) {
-    checkIndex(index);
     array[index] = item;
   }
 
@@ -348,7 +290,6 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
    *         in the array.
    */
   public E get(final int index) {
-    checkIndex(index);
     return array[index];
   }
 

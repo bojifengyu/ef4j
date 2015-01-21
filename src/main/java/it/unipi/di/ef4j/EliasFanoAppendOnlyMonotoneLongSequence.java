@@ -44,8 +44,8 @@ import it.unimi.dsi.sux4j.bits.SimpleSelect;
  * 
  * @author Giulio Ermanno Pibiri
  */
-public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppendOnlyMonotoneLongSequence
-    implements RandomAccess, Cloneable, Serializable {
+public final class EliasFanoAppendOnlyMonotoneLongSequence extends
+    AbstractAppendOnlyMonotoneLongSequence implements RandomAccess, Cloneable, Serializable {
   // Serial ID number.
   private transient static final long serialVersionUID = 13071990L;
 
@@ -98,7 +98,7 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppen
     lowerBits = new DynamicArray<long[]>();
     selectors = new DynamicArray<SimpleSelect>();
     info = new LongDynamicArray();
-    info.addLong(0L);
+    info.add(0L);
     buckets = 0;
   }
 
@@ -124,13 +124,13 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppen
     buffer = new long[B];
     N = 0;
     final int b = capacity / B;
-    lowerBits = new DynamicArray<long[]>(b, Integer.MAX_VALUE);
-    selectors = new DynamicArray<SimpleSelect>(b, Integer.MAX_VALUE);
+    lowerBits = new DynamicArray<long[]>(b);
+    selectors = new DynamicArray<SimpleSelect>(b);
     info = new LongDynamicArray(b);
-    info.addLong(0L);
+    info.add(0L);
     buckets = 0;
   }
-  
+
   @Override
   public void clear() {
     length = 0;
@@ -139,7 +139,7 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppen
     lowerBits.clear();
     selectors.clear();
     info.clear();
-    info.addLong(0L);
+    info.add(0L);
     buckets = 0;
   }
 
@@ -176,20 +176,21 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppen
     long nextOne;
     SimpleSelect selector;
     long[] lowerBitsVector;
+    int b = B;
 
     EliasFanoAppendOnlyMonotoneLongSequenceIterator() {
       N = length;
     }
 
     EliasFanoAppendOnlyMonotoneLongSequenceIterator(final int from, final int to) {
-      bucket = from / B;
-      offset = from % B;
+      bucket = from / b;
+      offset = from % b;
       next = from;
 
       if (offset != 0) {
         if (bucket < buckets) {
           selector = selectors.get(bucket);
-          final long lu = info.getLong(bucket);
+          final long lu = info.array[bucket];
           l = lu & LOWER_BITS_MASK;
           u = (lu & UPPER_BITS_MASK) >> 6;
           lowerBitsMask = (1L << l) - 1;
@@ -207,11 +208,12 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppen
     EliasFanoAppendOnlyMonotoneLongSequenceIterator(final Integer bucket, final int bucketSize) {
       this.bucket = bucket;
       N = bucketSize;
+      b = bucketSize;
     }
 
     EliasFanoAppendOnlyMonotoneLongSequenceIterator(final int bucket) {
       this.bucket = bucket;
-      N = B;
+      N = b;
     }
 
     @Override
@@ -222,14 +224,14 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppen
     @Override
     public Long next() {
       if (hasNext()) {
-        if (next % B == 0) {
+        if (next % b == 0) {
           offset = 0;
           nextOne = -1;
           ones = 0;
 
           if (bucket < buckets) {
             selector = selectors.get(bucket);
-            final long lu = info.getLong(bucket);
+            final long lu = info.array[bucket];
             l = lu & LOWER_BITS_MASK;
             u = (lu & UPPER_BITS_MASK) >> 6;
             lowerBitsMask = (1L << l) - 1;
@@ -239,7 +241,7 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppen
         }
 
         if (bucket == buckets + 1) {
-          return buffer[next++ % B];
+          return buffer[next++ % b];
         }
 
         nextOne = selector.bitVector().nextOne(nextOne + 1);
@@ -277,7 +279,7 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppen
   // Compression routine.
   protected void compress(final long[] buffer) {
     final int B = buffer.length;
-    final long lu = info.getLong(buckets);
+    final long lu = info.array[buckets];
     final long prevUpper = (lu & UPPER_BITS_MASK) >> 6;
     final long last = buffer[B - 1];
     final long u = last - prevUpper;
@@ -304,8 +306,8 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppen
 
     lowerBits.add(lowerBitsVector.bits());
     selectors.add(new SimpleSelect(upperBits));
-    info.setLong(buckets++, (prevUpper << 6) | l);
-    info.addLong(last << 6);
+    info.array[buckets++] = (prevUpper << 6) | l;
+    info.add(last << 6);
   }
 
   @Override
@@ -332,17 +334,18 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppen
     if (index < 0 || index >= length) {
       throw new IndexOutOfBoundsException("" + index);
     }
-
-    final int LONG_SIZE = Long.SIZE;
     final int B = this.B;
     final int bucket = index / B;
     final int offset = index % B;
+    return get(bucket, offset);
+  }
 
+  protected Long get(final int bucket, final int offset) {
     if (bucket == selectors.size()) {
       return buffer[offset];
     }
 
-    final long lu = info.getLong(bucket);
+    final long lu = info.array[bucket];
     final long l = lu & LOWER_BITS_MASK;
     final long u = (lu & UPPER_BITS_MASK) >> 6;
     final long lowerBitsMask = (1L << l) - 1;
@@ -352,12 +355,12 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppen
       return upperBits + u;
     }
 
+    final int LONG_SIZE = Long.SIZE;
     final long lowerBitsPosition = offset * l;
     final int startWord = (int) (lowerBitsPosition / LONG_SIZE);
     final int startBit = (int) (lowerBitsPosition % LONG_SIZE);
     final long totalOffset = startBit + l;
     final long result = lowerBits.get(bucket)[startWord] >>> startBit;
-
     return (upperBits << l | (totalOffset <= LONG_SIZE ? result : result
         | lowerBits.get(bucket)[startWord + 1] << -startBit)
         & lowerBitsMask)
@@ -380,22 +383,18 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppen
   // Binary search over info array.
   protected int binarySearchOverInfo(final long integer, final int i, final int j) {
     final int mid = (i + j) / 2;
-    final long u1 = (info.getLong(mid) & UPPER_BITS_MASK) >> 6;
+    final long u1 = (info.array[mid] & UPPER_BITS_MASK) >> 6;
 
     if (integer == u1) {
       return u1 == 0 ? mid : mid - 1;
     }
-
-    final long u2 = mid < buckets ? (info.getLong(mid + 1) & UPPER_BITS_MASK) >> 6 : last;
-
+    final long u2 = mid < buckets ? (info.array[mid + 1] & UPPER_BITS_MASK) >> 6 : last;
     if (integer > u1 && integer < u2) {
       return mid;
     }
-
     if (integer >= u2 && u2 < last) {
       return binarySearchOverInfo(integer, mid, j);
     }
-
     if (integer >= u2 && u2 == last) {
       return buckets;
     }
@@ -454,15 +453,15 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends AbstractAppen
     this.buckets = buckets;
     this.last = last;
 
-    DynamicArray<long[]> lowerBitsClone = new DynamicArray<long[]>(buckets, Integer.MAX_VALUE);
+    DynamicArray<long[]> lowerBitsClone = new DynamicArray<long[]>(buckets);
     DynamicArray<SimpleSelect> selectorsClone =
-        new DynamicArray<SimpleSelect>(buckets, Integer.MAX_VALUE);
+        new DynamicArray<SimpleSelect>(buckets);
     LongDynamicArray infoClone = new LongDynamicArray(buckets);
 
     for (int i = 0; i < buckets; i++) {
       lowerBitsClone.add(lowerBits.get(i).clone());
       selectorsClone.add(new SimpleSelect(selectors.get(i).bitVector().copy()));
-      infoClone.addLong(info.getLong(i));
+      infoClone.add(info.array[i]);
     }
     this.lowerBits = lowerBitsClone;
     this.selectors = selectorsClone;

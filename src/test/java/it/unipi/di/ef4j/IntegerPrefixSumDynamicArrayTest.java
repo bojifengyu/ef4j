@@ -30,9 +30,9 @@ public class IntegerPrefixSumDynamicArrayTest {
 
   void print(IntegerPrefixSumDynamicArray array) {
     System.out.println();
-    final int length = array.length();
+    final int length = array.size();
     for (int i = 0; i < length; i++) {
-      System.out.print(array.get(i) + " ");
+      System.out.print(array.array[i] + " ");
     }
   }
 
@@ -47,7 +47,7 @@ public class IntegerPrefixSumDynamicArrayTest {
     randomInit();
     final int l = length;
     for (int i = 0; i < l; i++) {
-      assertEquals(array.get(i), ps[i]);
+      assertEquals(array.array[i], ps[i]);
     }
   }
 
@@ -96,18 +96,26 @@ public class IntegerPrefixSumDynamicArrayTest {
     assertArrayEquals(array.toArray(), new int[] {2, 4, 9, 11, 13, 15});
     array.removeInt(2);
     assertArrayEquals(array.toArray(), new int[] {2, 4, 6, 8, 10});
+    array.addInt(5, 3);
+    assertArrayEquals(array.toArray(), new int[] {2, 4, 6, 8, 10, 13});
+    array.addInt(6, 3);
+    assertArrayEquals(array.toArray(), new int[] {2, 4, 6, 8, 10, 13, 16});
+    array.addInt(7, 3);
+    assertArrayEquals(array.toArray(), new int[] {2, 4, 6, 8, 10, 13, 16, 19});
+    array.addInt(8, 5);
+    assertArrayEquals(array.toArray(), new int[] {2, 4, 6, 8, 10, 13, 16, 19, 24});
   }
 
   @Test
   public void testBits() {
     randomInit();
-    assertEquals(array.bits(), array.length() * Integer.SIZE);
+    assertEquals(array.bits(), array.size() * Integer.SIZE);
   }
 
   @Test
   public void testTrimToSize() {
     array = new IntegerPrefixSumDynamicArray(10, 5);
-    assertTrue(array.length() <= array.capacity());
+    assertTrue(array.size() <= array.capacity());
     array.trimToSize();
     assertArrayEquals(array.toArray(), new int[] {10, 20, 30, 40, 50});
   }
@@ -115,6 +123,6 @@ public class IntegerPrefixSumDynamicArrayTest {
   @Test
   public void testLength() {
     randomInit();
-    assertEquals(length, array.length());
+    assertEquals(length, array.size());
   }
 }

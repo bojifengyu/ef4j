@@ -271,15 +271,12 @@ public final class EliasFanoAdaptiveAppendOnlyMonotoneLongSequence extends
     if (integer == u1) {
       return u1 == 0 ? mid : mid - 1;
     }
-
     if (integer > u1 && integer < u2) {
       return mid;
     }
-
     if (integer >= u2 && u2 < chunks.get(chunks.size() - 1).prevUpper) {
       return binarySearchOverPrevUpper(integer, mid, j);
     }
-
     if (integer >= u2 && u2 == chunks.get(chunks.size() - 1).prevUpper) {
       return chunks.size() - 1;
     }
@@ -336,7 +333,7 @@ public final class EliasFanoAdaptiveAppendOnlyMonotoneLongSequence extends
 
     final int numOfChunks = chunks.size();
 
-    DynamicArray<Chunk> chunksClone = new DynamicArray<Chunk>(numOfChunks, Integer.MAX_VALUE);
+    DynamicArray<Chunk> chunksClone = new DynamicArray<Chunk>(numOfChunks);
 
     for (Chunk c : chunks) {
       Chunk clone = new Chunk();

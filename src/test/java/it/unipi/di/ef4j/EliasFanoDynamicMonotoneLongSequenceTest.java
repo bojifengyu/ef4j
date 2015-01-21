@@ -24,7 +24,7 @@ public class EliasFanoDynamicMonotoneLongSequenceTest {
   private int length;
   private Long[] monotoneSequence;
   private EliasFanoDynamicMonotoneLongSequence s;
-  private static final int N = 1000;
+  private int N;
   private long[] toAdd;
 
   private Long[] monotoneSequenceGenerator(final int length, final int maxGap) {
@@ -61,6 +61,7 @@ public class EliasFanoDynamicMonotoneLongSequenceTest {
 
   private void buildAdditions() {
     final int length = s.size();
+    N = length / 10;
     toAdd = new long[length + N];
     for (int i = 0; i < length; i++) {
       toAdd[i] = monotoneSequence[i];
@@ -87,7 +88,7 @@ public class EliasFanoDynamicMonotoneLongSequenceTest {
     assertTrue(s.s.lowerBits.isEmpty());
     assertTrue(s.s.selectors.isEmpty());
     assertEquals(s.s.info.capacity(), 2);
-    assertEquals(s.s.info.getLong(0), 0L);
+    assertEquals(s.s.info.array[0], 0L);
     assertEquals(s.s.buckets, 0);
     assertFalse(s.isDynamic());
     assertNull(s.di);
@@ -112,7 +113,7 @@ public class EliasFanoDynamicMonotoneLongSequenceTest {
     assertTrue(s.s.lowerBits.isEmpty());
     assertTrue(s.s.selectors.isEmpty());
     assertEquals(s.s.info.capacity(), buckets);
-    assertEquals(s.s.info.getLong(0), 0L);
+    assertEquals(s.s.info.array[0], 0L);
     assertEquals(s.s.buckets, 0);
     assertFalse(s.isDynamic());
     assertNull(s.di);
@@ -173,7 +174,7 @@ public class EliasFanoDynamicMonotoneLongSequenceTest {
     assertTrue(s.s.lowerBits.isEmpty());
     assertTrue(s.s.selectors.isEmpty());
     assertEquals(s.s.info.capacity(), 2);
-    assertEquals(s.s.info.getLong(0), 0L);
+    assertEquals(s.s.info.array[0], 0L);
     assertEquals(s.s.buckets, 0);
     assertFalse(s.isDynamic());
     assertNull(s.di);
@@ -310,10 +311,19 @@ public class EliasFanoDynamicMonotoneLongSequenceTest {
     for (int i = 0; i < N; i++) {
       s.add(toAdd[length + i]);
     }
+    assertEquals(length + N, s.size());
     Arrays.sort(toAdd);
     final int l = length + N;
+    
+//    long start = System.currentTimeMillis();
+//    for (int i = 0; i < l; i++) {
+//      s.get(i);
+//    }
+//    long end = System.currentTimeMillis();
+//    System.out.println(end - start);
+    
     for (int i = 0; i < l; i++) {
-      assertEquals((long) s.get(i), toAdd[i]);
+      assertEquals(s.get(i).longValue(), toAdd[i]);
     }
   }
 
@@ -343,9 +353,27 @@ public class EliasFanoDynamicMonotoneLongSequenceTest {
   public void testRemoveIntLong() {
     buildSequence();
     s.dynamize();
-    int n = s.size();
+    buildAdditions();
+    final int length = s.size();
     for (int i = 0; i < N; i++) {
-      s.remove((long) monotoneSequence[(int) (Math.random() * (n - 1))]);
+      s.add(toAdd[length + i]);
+    }
+    for (int i = 0; i < N; i++) {
+      s.remove(toAdd[length + i]);
+    }
+
+    final int length1 = s.size();
+    assertEquals(length, length1);
+    
+//    long start = System.currentTimeMillis();
+//    for (int i = 0; i < length1; i++) {
+//      s.get(i);
+//    }
+//    long end = System.currentTimeMillis();
+//    System.out.println(end - start);
+
+    for (int i = 0; i < length1; i++) {
+      assertEquals(s.get(i).longValue(), toAdd[i]);
     }
   }
 

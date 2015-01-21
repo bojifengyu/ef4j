@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -45,14 +46,14 @@ import java.util.ArrayList;
  * 
  * @author Giulio Ermanno Pibiri
  */
-public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotoneLongSequence implements
-    RandomAccess, Cloneable, Serializable {
+public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotoneLongSequence
+    implements RandomAccess, Cloneable, Serializable {
   // Serial ID number.
   private transient static final long serialVersionUID = 8102012L;
 
-  //Initial capacity of each index.
+  // Initial capacity of each index.
   protected transient static final int INITIAL_INDEX_CAPACITY = 2;
- 
+
   // Backing Elias-Fano compressed sequence. It can behave in an append-only or dynamic way.
   protected EliasFanoAppendOnlyMonotoneLongSequence s;
 
@@ -183,7 +184,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
     return s.iterator();
   }
 
-  private Iterator<Long> iterator(final int bucket) {
+  protected Iterator<Long> iterator(final int bucket) {
     return new EliasFanoDynamicMonotoneLongSequenceIterator<Long>(bucket);
   }
 
@@ -199,7 +200,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
   @Override
   public List<Long> subList(final int from, final int to) {
     checkIndices(from, to);
-    
+
     final int B = (int) Math.sqrt(to - from + 1 << 3);
     EliasFanoDynamicMonotoneLongSequence subList = new EliasFanoDynamicMonotoneLongSequence(B);
 
@@ -264,7 +265,9 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
 
     void init(final int bucket) {
       itOverBucket =
-          s.iterator(Integer.valueOf(bucket), bucket < s.buckets ? di.sizes.getInt(bucket) : s.N);
+          s.iterator(Integer.valueOf(bucket),
+              bucket < s.buckets ? di.sizes.getInt(bucket) - di.indexSize(di.indices.get(bucket))
+                  : s.N);
       itOverAdds = di.indices.get(bucket).additions.iterator();
       itOverDels = di.indices.get(bucket).deletions.iterator();
       a = next(itOverBucket);
@@ -273,7 +276,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
     }
 
     EliasFanoDynamicMonotoneLongSequenceIterator(final int from, final int to) {
-      bucket = di.bs(from, 0, s.buckets + 1);
+      bucket = di.binarySearchOverSizes(from);
       init(bucket);
       while (next < from) {
         if (a < b && a < c) {
@@ -352,8 +355,8 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
 
   // Record class that represents a bucket index.
   static private class Index {
-    DynamicArray<Long> additions;
-    DynamicArray<Long> deletions;
+    LongDynamicArray additions;
+    LongDynamicArray deletions;
   }
 
   // DynamicIndex inner class.
@@ -367,10 +370,9 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
     
     DynamicIndex() {
       final int buckets = s.buckets;
-      final int B = s.B;
-      halfB = B >> 1;
-      doubleB = B << 1;
-      int c = B / (Fast.mostSignificantBit(length) << 1);
+      halfB = s.B >> 1;
+      doubleB = s.B << 1;
+      int c = s.B / (Fast.mostSignificantBit(length) << 1);
 
       if (c >> 1 < INITIAL_INDEX_CAPACITY) {
         throw new RuntimeException("B value is too small.");
@@ -394,45 +396,123 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
         throw new IndexOutOfBoundsException("" + index);
       }
 
-      final int bucket = bs(index, 0, s.buckets + 1);
-      final int sub = bucket > 0 ? sizes.get(bucket - 1) + indexSizeUpTo(bucket - 1) : 0;
+      int bucket = binarySearchOverSizes(index); 
+      int offset = bucket > 0 ? sizes.array[bucket - 1] : 0;
+      int i = index - offset;
+
+      Index ind = indices.get(bucket);
+      int l1 = ind.additions.size();
+      int l2 = ind.deletions.size();
+      int compressedBucketLength = sizes.getInt(bucket) - l1 + l2;
+
+      if (i < compressedBucketLength) {
+        final long v = s.get(bucket, i);
+        int j = 0;
+        int k = 0;
+        int n = 0;
+        if (l1 > 0) {
+          while (n < l1 && ind.additions.array[n++] < v) {
+            j++;
+          }
+        }
+        if (l2 > 0) {
+          n = 0;
+          while (n < l2 && ind.deletions.array[n++] <= v) {
+            k++;
+          }
+        }
+        
+        if (j == 0 && k == 0) {
+          return v;
+        }
+        
+        int curOff = i - j + k;
+        if (curOff >= 0 && curOff < compressedBucketLength) {
+          if (k > j) {
+            
+            long p = -1L;
+            int newOff = -1;
+            while (newOff != curOff) {
+              newOff = curOff;
+              if (newOff >= compressedBucketLength) {
+                bucket++;
+                offset = bucket > 0 ? sizes.array[bucket - 1] : 0;
+                i = newOff = newOff % compressedBucketLength;
+                ind = indices.get(bucket);
+                l1 = ind.additions.size();
+                l2 = ind.deletions.size();
+                compressedBucketLength = (bucket < s.buckets ? sizes.getInt(bucket) : s.B) - l1 + l2;
+                j = 0;
+                k = 0;
+              }
+              p = s.get(bucket, newOff);
+                          
+              n = j;
+              if (l1 > 0) {
+                while (n < l1 && ind.additions.array[n++] < p) {
+                  j++;
+                }
+              }
+              if (l2 > 0) {
+                n = k;
+                while (n < l2 && ind.deletions.array[n++] <= p) {
+                  k++;
+                }
+              }
+              curOff = i - j + k;
+            }
+            if (checkIfGreater(p, ind.additions, ind.deletions, j, k)) {
+              return p;
+            }
+          }
+          else {
+            final long p = s.get(bucket, curOff);
+            if (checkIfGreater(p, ind.additions, ind.deletions, j, k)) {
+              return p;
+            }
+          }
+        }
+      }
+            
       Iterator<Long> it = iterator(bucket);
-      int from = 0;
-      int to = index - sub;
-      while (from++ < to) {
+      int c = 0;
+      while (c++ < i) {
         it.next();
       }
       return it.next();
     }
+    
+    private boolean checkIfGreater(final long p, LongDynamicArray additions, LongDynamicArray deletions, final int j, final int k) {
+      return (j > 0 ? p > additions.array[j - 1] : true && k > 0 ? p > deletions.array[k - 1] : true);
+    }
 
-    int bs(final long integer, final int i, final int j) {
-      final int mid = (i + j) / 2;
-      final long u1 =
-          mid < s.buckets ? (sizes.get(mid) + indexSizeUpTo(mid))
-              : (sizes.get(s.buckets - 1) + indexSizeUpTo(s.buckets - 1));
-
-      if (integer == 0 || integer < sizes.get(0) + indexSizeUpTo(0)) {
+    int binarySearchOverSizes(final long index) {
+      if (index < sizes.array[0]) {
         return 0;
+      } else if (index >= sizes.array[s.buckets - 1]) {
+        return s.buckets - 1;
+      } else {
+        return bs(index, 0, s.buckets + 1);
       }
-      if (integer == u1) {
-        return mid;
+    }
+
+    int bs(final long index, final int i, final int j) {
+      final int mid = (i + j) / 2;
+      final long u1 = mid < s.buckets ? sizes.array[mid] : sizes.array[s.buckets - 1];
+      if (index < u1) {
+        return bs(index, i, mid);
       }
-      if (integer < u1) {
-        return bs(integer, i, mid);
-      }
-      final long u2 =
-          mid < s.buckets - 1 ? (sizes.get(mid + 1) + indexSizeUpTo(mid + 1)) : (sizes
-              .get(s.buckets - 1) + indexSizeUpTo(s.buckets - 1));
-      if ((integer > u1 && integer < u2) || mid == s.buckets - 1) {
+      final long u2 = mid < s.buckets - 1 ? sizes.array[mid + 1] : sizes.array[s.buckets - 1];
+      if ((index >= u1 && index < u2)) {
         return mid + 1;
       }
-      return bs(integer, mid, j);
+      return bs(index, mid + 1, j);
     }
 
     Index newIndex() {
       Index index = new Index();
-      index.additions = new DynamicArray<Long>(INITIAL_INDEX_CAPACITY, maxIndexCapacity);
-      index.deletions = new DynamicArray<Long>(INITIAL_INDEX_CAPACITY, maxIndexCapacity);
+      index.additions = new LongDynamicArray(INITIAL_INDEX_CAPACITY, maxIndexCapacity);
+      index.deletions = new LongDynamicArray(INITIAL_INDEX_CAPACITY, maxIndexCapacity);
       return index;
     }
 
@@ -463,21 +543,23 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
         bucket = s.binarySearchOverInfo(integer, 0, s.buckets + 1);
         index = indices.get(bucket);
         insert(index.additions, integer); // insertion in order in additions index
+        
+        if (bucket != s.buckets) {
+          sizes.incr(bucket);
+        }
       }
 
       if (isAdditionsIndexFull(index) || isBufferFull()) {
         final int B = s.B;
-        final int indexSize = indexSize(index);
-        
+
         if (bucket != s.buckets) {
-          final int newB = sizes.getInt(bucket) + indexSize;
+          final int newB = sizes.getInt(bucket);
           long[] f = fusion(bucket, newB);
 
           if (newB >= doubleB) { // split in two blocks
             s.info.insertLong(bucket + 1);
+            s.info.array[bucket + 1] = f[B - 1] << 6;
             reconstruction(f, B, bucket);
-            s.info.setLong(bucket + 1, f[B - 1] << 6);
-            
             compress(f, B, newB - 1, bucket + 1);
             s.lowerBits.add(bucket + 1, cb.lowerBitsVector.bits());
             s.selectors.add(bucket + 1, new SimpleSelect(cb.upperBits));
@@ -487,9 +569,9 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
             reconstruction(f, newB, bucket);
           }
         } else {
-          final int newB = s.N + indexSize;
+          final int newB = s.N + indexSize(index);
 
-          if (newB < B) {
+          if (newB != B) {
             fusion(B); // fusion of index with buffer
             s.N = newB;
           } else {
@@ -512,19 +594,17 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
         final int bucket = s.binarySearchOverInfo(integer, 0, s.buckets + 1);
         Index index = indices.get(bucket);
         insert(index.deletions, integer); // insertion in order in deletions index
+        sizes.decr(bucket);
 
         if (isDeletionsIndexFull(index)) {
           final int B = s.B;
-          final int indexSize = indexSize(index);
-          
+
           if (bucket != s.buckets) {
-            final int newB = sizes.getInt(bucket) + indexSize;
+            final int newB = sizes.getInt(bucket);
             long[] f = fusion(bucket, newB);
 
             if (newB <= halfB) {
-              final int nextBlockDim =
-                  (bucket == s.buckets ? s.N : sizes.getInt(bucket + 1))
-                      + indexSize(indices.get(bucket + 1));
+              final int nextBlockDim = bucket == s.buckets ? s.N : sizes.getInt(bucket + 1);
               final int finalBlockDim = newB + nextBlockDim;
 
               if (finalBlockDim < doubleB && nextBlockDim > 0) { // Merge with next block if we do
@@ -537,7 +617,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
               reconstruction(f, newB, bucket);
             }
           } else {
-            final int newB = s.N + indexSize;
+            final int newB = s.N + indexSize(index);
             fusion(B);
             s.N = newB;
           }
@@ -557,20 +637,11 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
       return index.additions.size() - index.deletions.size();
     }
 
-    int indexSizeUpTo(final int index) {
-      int sum = 0;
-      for (int i = 0; i <= index; i++) {
-        sum += indexSize(indices.get(i));
-      }
-      return sum;
-    }
-
     void compress(final long[] array, final int from, final int to, final int bucket) {
       final int B = to - from + 1;
-      final long lu = s.info.getLong(bucket);
+      final long lu = s.info.array[bucket];
       final long prevUpper = (lu & EliasFanoAppendOnlyMonotoneLongSequence.UPPER_BITS_MASK) >> 6;
-      final long last = array[to];
-      final long u = last - prevUpper;
+      final long u = array[to] - prevUpper;
       final long l = Math.max(0, Fast.mostSignificantBit(u / B));
       final long lowerBitsMask = (1L << l) - 1;
 
@@ -592,7 +663,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
         }
       }
 
-      s.info.setLong(bucket, (prevUpper << 6) | l);
+      s.info.array[bucket] = (prevUpper << 6) | l;
       cb.lowerBitsVector = lowerBitsVector;
       cb.upperBits = upperBits;
     }
@@ -673,12 +744,12 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
       }
     }
 
-    void insert(DynamicArray<Long> index, final long integer) {
+    void insert(LongDynamicArray index, final long integer) {
       final int l = index.size();
       int i = 0;
       while (i < l) {
-        if (integer < index.get(i)) {
-          index.add(i, integer);
+        if (integer < index.array[i]) {
+          index.addLong(i, integer);
           return;
         }
         i++;
@@ -689,7 +760,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
     int bits() {
       int bits = 0;
       for (Index index : indices) {
-        bits += index.additions.capacity() + index.deletions.capacity();
+        bits += index.additions.size() + index.deletions.size();
       }
       return bits * Long.SIZE + sizes.bits();
     }
@@ -715,55 +786,13 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
       }
     }
 
-    DynamicArray<Long> clone(DynamicArray<Long> array) {
-      DynamicArray<Long> clone = new DynamicArray<Long>(INITIAL_INDEX_CAPACITY, maxIndexCapacity);
+    LongDynamicArray clone(LongDynamicArray array) {
+      LongDynamicArray clone = new LongDynamicArray(INITIAL_INDEX_CAPACITY, maxIndexCapacity);
       final int l = array.size();
       for (int i = 0; i < l; i++) {
-        clone.add(array.get(i));
+        clone.add(array.array[i]);
       }
       return clone;
     }
-  }
-
-  public static final void main(String[] args) throws NumberFormatException, IOException {
-    int B = 0;
-    String fileName = "";
-    String toBeAdded = "";
-
-    if (args.length != 0) {
-      B = Integer.parseInt(args[0]);
-      fileName = args[1];
-      toBeAdded = args[2];
-    }
-
-    EliasFanoDynamicMonotoneLongSequence ds = new EliasFanoDynamicMonotoneLongSequence(B);
-    File file = new File(fileName);
-    BufferedReader br = new BufferedReader(new FileReader(file));
-
-    String str;
-    while ((str = br.readLine()) != null) {
-      ds.add(Long.parseLong(str));
-    }
-    br.close();
-
-    ds.dynamize();
-
-    BufferedReader bfr = new BufferedReader(new FileReader(new File(toBeAdded)));
-    System.out.println("Adding...");
-    while ((str = bfr.readLine()) != null) {
-      ds.add(Long.parseLong(str));
-    }
-    bfr.close();
-
-    for (int i = 0; i < 1000000; i++) {
-    }
-
-    Iterator<Long> it = ds.iterator();
-    long start = System.currentTimeMillis();
-    while (it.hasNext()) {
-      it.next();
-    }
-    long end = System.currentTimeMillis();
-    System.out.println(end - start);
   }
 }

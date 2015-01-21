@@ -16,15 +16,18 @@
 
 package it.unipi.di;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 /**
  * The <tt>LongDynamicArray</tt> class represents a dynamic array of <tt>long</tt>s. It avoids the
- * space/time overhead introduced by the wrapper <tt>java.lang.Long</tt> class. This is an
- * <em>utility class</em>, used in Elias-Fano succinct data structures but it could have an
- * independent interest too.
+ * space/time overhead introduced by the wrapper <tt>java.lang.Long</tt> class.
+ * This is an <em>utility class</em>, used in Elias-Fano succinct data structures therefore avoids
+ * index bound checks.
  * 
  * @author Giulio Ermanno Pibiri
  */
-public final class LongDynamicArray {
+public final class LongDynamicArray implements Iterable<Long> {
   // Array of stored longs.
   protected long[] array;
 
@@ -33,6 +36,9 @@ public final class LongDynamicArray {
 
   // Default initial capacity.
   protected static final int INITIAL_CAPACITY = 2;
+  
+  //Maximum allowed capacity.
+  protected int maxCapacity = Integer.MAX_VALUE;
 
   private void init(final int capacity) {
     array = new long[capacity];
@@ -46,6 +52,22 @@ public final class LongDynamicArray {
     init(INITIAL_CAPACITY);
   }
 
+  /**
+   * Constructor for known initial capacity and maximum allowed capacity.
+   * 
+   * @param capacity the specified initial capacity.
+   * @param maxCapacity the specified maximum allowed capacity.
+   * @throws illegalArgumentException if the maximum capacity is less than the initial one.
+   */
+  public LongDynamicArray(final int capacity, final int maxCapacity) {
+    if (maxCapacity < capacity) {
+      throw new IllegalArgumentException(
+          "Maximum capacity must be at least equal to the specified initial one.");
+    }
+    init(capacity);
+    this.maxCapacity = maxCapacity;
+  }
+  
   /**
    * Constructor for known initial capacity.
    * 
@@ -61,41 +83,36 @@ public final class LongDynamicArray {
   public void clear() {
     init(INITIAL_CAPACITY);
   }
+  
+  /**
+   * Clear the data structure with the specified initial capacity.
+   */
+  public void clear(final int capacity) {
+    init(capacity);
+  }
 
   /**
    * Append the specified integer to the end of the array.
    * 
    * @param integer the to-be-appended integer.
    */
-  public void addLong(final long integer) {
+  public void add(final long integer) {
     resize();
     array[length++] = integer;
   }
 
   /**
-   * Set the integer in the specified position to the given value.
+   * Add a new item to the array at the given position. Shifts any subsequent elements to the right
+   * (add one to their indices).
    * 
-   * @param index the position of the to-be-set integer.
-   * @param integer the value to be set.
-   * @throws IndexOutOfBoundsException if <tt>index</tt> if greater or equal to the number of items
-   *         in the array.
+   * @param index the position at which we append the specified item.
+   * @param item the item to be added.
    */
-  public void setLong(final int index, final long integer) {
-    checkIndex(index);
+  public void addLong(final int index, final long integer) {
+    resize();
+    System.arraycopy(array, index, array, index + 1, length - index);
     array[index] = integer;
-  }
-
-  /**
-   * Returns the integer at a specified position.
-   * 
-   * @param index the index of the integer to be retrieved.
-   * @return the integer at position <tt>index</tt>.
-   * @throws IndexOutOfBoundsException if <tt>index</tt> if greater or equal to the number of
-   *         integers in the array.
-   */
-  public long getLong(final int index) {
-    checkIndex(index);
-    return array[index];
+    length++;
   }
 
   /**
@@ -103,8 +120,31 @@ public final class LongDynamicArray {
    * 
    * @return the number of stored items in the array.
    */
-  public int length() {
+  public int size() {
     return length;
+  }
+
+  /**
+   * Print all the items in the collection. Useful for debugging.
+   */
+  public void print() {
+    final int length = this.length;
+    if (length == 0) {
+      System.out.print("/");
+    }
+    if (length == 1) {
+      System.out.print("[" + array[0] + "]");
+    } else {
+      for (int i = 0; i < length; i++) {
+        if (i == 0) {
+          System.out.print("[" + array[0] + ", ");
+        } else if (i == length - 1) {
+          System.out.print(array[length - 1] + "]");
+        } else {
+          System.out.print(array[i] + ", ");
+        }
+      }
+    }
   }
 
   /**
@@ -130,11 +170,8 @@ public final class LongDynamicArray {
    * right (add one to their indices).
    * 
    * @param index the index of the integer to be inserted.
-   * @throws IndexOutOfBoundsException if <tt>index</tt> if greater or equal to the number of
-   *         integers in the array.
    */
   public void insertLong(final int index) {
-    checkIndex(index);
     resize();
     System.arraycopy(array, index, array, index + 1, length - index);
     length++;
@@ -145,11 +182,8 @@ public final class LongDynamicArray {
    * the left (subtracts one from their indices).
    * 
    * @param index the index of the to-be-removed item.
-   * @throws IndexOutOfBoundsException if <tt>index</tt> if greater or equal to the number of
-   *         integers in the array.
    */
   public void removeLong(final int index) {
-    checkIndex(index);
     resize();
     System.arraycopy(array, index + 1, array, index, length - index - 1);
     length--;
@@ -194,9 +228,37 @@ public final class LongDynamicArray {
     return array.length * Long.SIZE;
   }
 
-  private void checkIndex(final int index) {
-    if (index >= array.length) {
-      throw new IndexOutOfBoundsException("" + index);
+  @Override
+  public Iterator<Long> iterator() {
+    return new LongDynamicArrayIterator<Long>();
+  }
+  
+  private class LongDynamicArrayIterator<T> implements Iterator<Long> {
+    private int N = length;
+    private int next = 0;
+
+    LongDynamicArrayIterator() {
+      next = 0;
+      N = length;
+    }
+
+
+    @Override
+    public boolean hasNext() {
+      return next < N;
+    }
+
+    @Override
+    public Long next() {
+      if (hasNext()) {
+        return array[next++];
+      }
+      throw new NoSuchElementException();
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
     }
   }
 }
