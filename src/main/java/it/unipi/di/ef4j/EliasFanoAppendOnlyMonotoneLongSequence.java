@@ -369,7 +369,7 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends
 
   @Override
   public Long nextGEQ(final long integer) {
-    final int pos = integer > 0 ? binarySearchOverInfo(integer, 0, buckets + 1) : 0;
+    final int pos = binarySearchOverInfo(integer);
     Iterator<Long> it = this.iterator(pos);
     while (it.hasNext()) {
       long v = it.next();
@@ -379,27 +379,37 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends
     }
     return -1L;
   }
-
+  
   // Binary search over info array.
-  protected int binarySearchOverInfo(final long integer, final int i, final int j) {
-    final int mid = (i + j) / 2;
-    final long u1 = (info.array[mid] & UPPER_BITS_MASK) >> 6;
-
-    if (integer == u1) {
-      return u1 == 0 ? mid : mid - 1;
+  protected int binarySearchOverInfo(final long integer) {
+    if (integer <= (info.array[0] & UPPER_BITS_MASK) >> 6) {
+      return 0;
     }
-    final long u2 = mid < buckets ? (info.array[mid + 1] & UPPER_BITS_MASK) >> 6 : last;
-    if (integer > u1 && integer < u2) {
-      return mid;
-    }
-    if (integer >= u2 && u2 < last) {
-      return binarySearchOverInfo(integer, mid, j);
-    }
-    if (integer >= u2 && u2 == last) {
+    if (integer >= last) {
       return buckets;
     }
-
-    return binarySearchOverInfo(integer, i, mid);
+    
+    int lo = 0;
+    int hi = buckets;
+    
+    while (lo <= hi) {
+      final int mid = lo + (hi - lo) / 2;
+      final long u1 = (info.array[mid] & UPPER_BITS_MASK) >> 6;
+      if (integer == u1) {
+        return mid - 1;
+      }
+      final long u2 = mid < buckets ? (info.array[mid + 1] & UPPER_BITS_MASK) >> 6 : last;
+      if (integer >= u2 && u2 < last) {
+        lo = mid + 1;
+      }
+      else if (u1 < integer && integer < u2) {
+        return mid;
+      }
+      else {
+        hi = mid - 1;
+      }
+    }
+    return -1;
   }
 
   @Override

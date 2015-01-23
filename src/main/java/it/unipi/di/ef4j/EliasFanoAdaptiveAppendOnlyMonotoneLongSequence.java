@@ -253,35 +253,45 @@ public final class EliasFanoAdaptiveAppendOnlyMonotoneLongSequence extends
 
   @Override
   public Long nextGEQ(final long integer) {
-    final int chunk = integer > 0 ? binarySearchOverPrevUpper(integer, 0, chunks.size()) : 0;
+    final int chunk = binarySearchOverPrevUpper(integer);
     Chunk c = chunks.get(chunk);
     final long u = c.prevUpper;
     final long result = c.s.nextGEQ(integer - u);
     return result == -1L ? -1L : result + u;
   }
-
+  
   // Binary search over previous upper bounds.
-  private int binarySearchOverPrevUpper(final long integer, final int i, final int j) {
-    final int mid = (i + j) / 2;
-    final long u1 = chunks.get(mid).prevUpper;
-    final long u2 =
-        mid < chunks.size() - 1 ? chunks.get(mid + 1).prevUpper
-            : chunks.get(chunks.size() - 1).prevUpper;
-
-    if (integer == u1) {
-      return u1 == 0 ? mid : mid - 1;
+  private int binarySearchOverPrevUpper(final long integer) {
+    if (integer <= chunks.get(0).prevUpper) {
+      return 0;
     }
-    if (integer > u1 && integer < u2) {
-      return mid;
+    final long last = chunks.get(chunks.length - 1).prevUpper;
+    if (integer >= last) {
+      return chunks.length - 1;
     }
-    if (integer >= u2 && u2 < chunks.get(chunks.size() - 1).prevUpper) {
-      return binarySearchOverPrevUpper(integer, mid, j);
+    
+    int lo = 0;
+    int hi = chunks.length; 
+    
+    while (lo <= hi) {
+      final int mid = lo + (hi - lo) / 2;
+      final long u1 = chunks.get(mid).prevUpper;
+      if (integer == u1) {
+        return mid - 1;
+      }
+      final long u2 = mid < chunks.length - 1 ? chunks.get(mid + 1).prevUpper : last;
+      if (integer >= u2 && u2 < last) {
+        lo = mid + 1;
+      }
+      else if (u1 < integer && integer < u2) {
+        return mid;
+      }
+      else {
+        hi = mid - 1;
+      }
     }
-    if (integer >= u2 && u2 == chunks.get(chunks.size() - 1).prevUpper) {
-      return chunks.size() - 1;
-    }
-
-    return binarySearchOverPrevUpper(integer, i, mid);
+    
+    return -1;
   }
 
   @Override
