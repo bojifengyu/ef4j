@@ -1,11 +1,9 @@
 package it.unipi.di;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.junit.Test;
@@ -145,141 +143,5 @@ public class DynamicArrayTest {
     while (it.hasNext()) {
       assertEquals(it.next(), j++);
     }
-  }
-
-  @Test
-  public void testAddAll() {
-    buildArray();
-    ArrayList<Integer> toBeAdded = new ArrayList<Integer>();
-    Integer last = array.get(array.length - 1);
-
-    toBeAdded.add(++last);
-    toBeAdded.add(++last);
-    toBeAdded.add(++last);
-    toBeAdded.add(++last);
-    toBeAdded.add(++last);
-
-    array.addAll(toBeAdded);
-
-    assertEquals(array.get(length + 4), last--);
-    assertEquals(array.get(length + 3), last--);
-    assertEquals(array.get(length + 2), last--);
-    assertEquals(array.get(length + 1), last--);
-    assertEquals(array.get(length), last--);
-  }
-
-  @Test
-  public void testContains() {
-    buildArray();
-    Integer last = array.get(array.length - 1);
-
-    array.add(++last);
-    array.add(++last);
-    array.add(++last);
-    array.add(++last);
-    array.add(++last);
-
-    assertTrue(array.contains(last--));
-    assertTrue(array.contains(last--));
-    assertTrue(array.contains(last--));
-    assertTrue(array.contains(last--));
-    assertTrue(array.contains(last--));
-  }
-
-  @Test
-  public void testContainsAll() {
-    buildArray();
-
-    ArrayList<Integer> l = new ArrayList<Integer>();
-    Integer last = array.get(array.length - 1);
-
-    l.add(++last);
-    l.add(++last);
-    l.add(++last);
-    l.add(++last);
-    l.add(++last);
-
-    array.addAll(l);
-
-    assertTrue(array.containsAll(l));
-  }
-
-  @Test
-  public void testRemoveIndex() {
-    Integer[] a = new Integer[] {2, 4, 3, 1, 5, 6, 10};
-    DynamicArray<Integer> array = new DynamicArray<Integer>(a);
-    array.remove(0);
-    assertArrayEquals(array.toArray(), new Integer[] {4, 3, 1, 5, 6, 10});
-    array.remove(3);
-    assertArrayEquals(array.toArray(), new Integer[] {4, 3, 1, 6, 10});
-    array.remove(1);
-    assertArrayEquals(array.toArray(), new Integer[] {4, 1, 6, 10});
-    array.remove(3);
-    assertArrayEquals(array.toArray(), new Integer[] {4, 1, 6});
-    assertEquals(array.length, 3);
-  }
-
-  @Test
-  public void testRemoveObject() {
-    buildArray();
-    try {
-      array.remove(new Object());
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testRemoveAll() {
-    buildArray();
-
-    ArrayList<Integer> l = new ArrayList<Integer>();
-    Integer last = array.get(array.length - 1);
-
-    l.add(++last);
-    l.add(++last);
-    l.add(++last);
-    l.add(++last);
-    l.add(++last);
-
-    try {
-      array.removeAll(l);
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testRetainAll() {
-    buildArray();
-
-    ArrayList<Integer> l = new ArrayList<Integer>();
-    Integer last = array.get(array.length - 1);
-
-    l.add(++last);
-    l.add(++last);
-    l.add(++last);
-    l.add(++last);
-    l.add(++last);
-
-    try {
-      array.retainAll(l);
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testToArrayTArray() {
-    buildArray();
-    try {
-      array.toArray(new Integer[100]);
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
   }
 }

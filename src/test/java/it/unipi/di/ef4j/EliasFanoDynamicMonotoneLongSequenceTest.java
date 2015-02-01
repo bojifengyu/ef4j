@@ -62,6 +62,7 @@ public class EliasFanoDynamicMonotoneLongSequenceTest {
   private void buildAdditions() {
     final int length = s.size();
     N = length / 10;
+    System.out.println("Adding " + N + " integers...");
     toAdd = new long[length + N];
     for (int i = 0; i < length; i++) {
       toAdd[i] = monotoneSequence[i];
@@ -71,6 +72,7 @@ public class EliasFanoDynamicMonotoneLongSequenceTest {
     for (int i = length; i < l; i++) {
       toAdd[i] = (long) (Math.random() * (last + N));
     }
+    System.out.println("Total length: " + l + ".");
   }
 
   @Test
@@ -364,6 +366,7 @@ public class EliasFanoDynamicMonotoneLongSequenceTest {
 
     final int length1 = s.size();
     assertEquals(length, length1);
+    System.out.println("Total length: " + length1 + ".");
     
 //    long start = System.currentTimeMillis();
 //    for (int i = 0; i < length1; i++) {
@@ -456,97 +459,5 @@ public class EliasFanoDynamicMonotoneLongSequenceTest {
     buildSequence();
     s.add(s.s.last);
     assertEquals(s.lastIndexOf(s.s.last), s.size() - 1);
-  }
-
-  @Test
-  public void testAddAllIntCollectionOfQextendsLong() {
-    buildSequence();
-
-    ArrayList<Long> l = new ArrayList<Long>();
-    l.add(0L);
-    l.add(1L);
-    l.add(2L);
-    l.add(3L);
-    l.add(4L);
-
-    try {
-      s.addAll((int) (Math.random() * (s.size() - 1)), l);
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testRemoveObject() {
-    buildSequence();
-    try {
-      s.remove((long) (Math.random() * s.s.last));
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testRetainAll() {
-    buildSequence();
-    ArrayList<Long> l = new ArrayList<Long>();
-    long last = s.s.last;
-    l.add(last++);
-    l.add(last++);
-    l.add(last++);
-    l.add(last++);
-    l.add(last++);
-    try {
-      s.retainAll(l);
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testSet() {
-    buildSequence();
-    try {
-      s.set((int) (Math.random() * (s.size() - 1)), (long) (Math.random() * s.s.last));
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testToArrayTArray() {
-    buildSequence();
-    try {
-      s.toArray(new Long[100]);
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testListIterator() {
-    buildSequence();
-    try {
-      s.listIterator();
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testListIteratorInt() {
-    buildSequence();
-    try {
-      s.listIterator((int) (Math.random() * (s.size() - 1)));
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
   }
 }

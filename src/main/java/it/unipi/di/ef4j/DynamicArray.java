@@ -16,7 +16,6 @@
 
 package it.unipi.di;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -28,19 +27,22 @@ import java.util.NoSuchElementException;
  *
  * @author Giulio Ermanno Pibiri
  */
-public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
+public final class DynamicArray<E> implements Iterable<E> {
   // Array of stored elements.
   protected E[] array;
 
   // Number of inserted elements.
   protected int length;
+  
+  // Initial array capacity.
+  static final int INIT_CAPACITY = 2;
 
   /**
    * Constructor for unknown initial capacity. Default initial capacity is fixed to 2.
    */
   @SuppressWarnings("unchecked")
   public DynamicArray() {
-    array = (E[]) new Object[2];
+    array = (E[]) new Object[INIT_CAPACITY];
     length = 0;
   }
 
@@ -72,9 +74,8 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
    * Clear the data structure.
    */
   @SuppressWarnings("unchecked")
-  @Override
   public void clear() {
-    array = (E[]) new Object[2];
+    array = (E[]) new Object[INIT_CAPACITY];
     length = 0;
   }
 
@@ -170,7 +171,6 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
    * 
    * @return <tt>true</tt> if the array is empty; <tt>false</tt> otherwise.
    */
-  @Override
   public boolean isEmpty() {
     return length == 0;
   }
@@ -180,7 +180,6 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
    * 
    * @return the number of stored items in the array.
    */
-  @Override
   public int size() {
     return length;
   }
@@ -199,7 +198,6 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
    * 
    * @param item the item to be added.
    */
-  @Override
   public boolean add(final E item) {
     resize();
     array[length++] = item;
@@ -236,19 +234,6 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
     System.arraycopy(array, index + 1, array, index, length - index - 1);
     length--;
     array[length] = null; // avoids loitering
-    return true;
-  }
-
-  /**
-   * Append all items in the specified collection.
-   * 
-   * @param c the collection of items to be appended.
-   */
-  @Override
-  public boolean addAll(final Collection<? extends E> c) {
-    for (E item : c) {
-      add(item);
-    }
     return true;
   }
 
@@ -301,98 +286,32 @@ public final class DynamicArray<E> implements Collection<E>, Iterable<E> {
    *         last element).
    */
   @SuppressWarnings("unchecked")
-  @Override
   public E[] toArray() {
     E[] temp = (E[]) new Object[length];
     System.arraycopy(array, 0, temp, 0, length);
     return temp;
   }
 
-  /**
-   * Print all the items in the collection. Useful for debugging.
-   */
-  public void print() {
-    final int length = this.length;
-    if (length == 0) {
-      System.out.print("/");
-    }
-    if (length == 1) {
-      System.out.print("[" + array[0] + "]");
-    } else {
-      for (int i = 0; i < length; i++) {
-        if (i == 0) {
-          System.out.print("[" + array[0] + ", ");
-        } else if (i == length - 1) {
-          System.out.print(array[length - 1] + "]");
-        } else {
-          System.out.print(array[i] + ", ");
-        }
-      }
-    }
-  }
-
-  /**
-   * Return <tt>true</tt> if the array contains the specified item.
-   * 
-   * @param o the item to be tested for presence in the array.
-   * @return <tt>true</tt> if the item is present in the array; <tt>false</tt> otherwise.
-   */
-  @Override
-  public boolean contains(final Object o) {
-    for (E item : this) {
-      if (o.equals(item)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Return <tt>true</tt> if the array contains all the items in the specified collection.
-   * 
-   * @param c the collection whose items have to be tested for presence in the array.
-   * @return <tt>true</tt> if all items in <tt>c</tt> are present in the array; <tt>false</tt>
-   *         otherwise.
-   */
-  @Override
-  public boolean containsAll(final Collection<?> c) {
-    for (Object o : c) {
-      if (!this.contains(o)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /**
-   * Unsupported operation.
-   */
-  @Override
-  public boolean remove(Object arg0) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Unsupported operation.
-   */
-  @Override
-  public boolean removeAll(Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Unsupported operation.
-   */
-  @Override
-  public boolean retainAll(Collection<?> c) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Unsupported operation.
-   */
-  @Override
-  public <T> T[] toArray(T[] a) {
-    throw new UnsupportedOperationException();
-  }
+//  /**
+//   * Print all the items in the collection. Useful for debugging.
+//   */
+//  public void print() {
+//    final int length = this.length;
+//    if (length == 0) {
+//      System.out.print("/");
+//    }
+//    if (length == 1) {
+//      System.out.print("[" + array[0] + "]");
+//    } else {
+//      for (int i = 0; i < length; i++) {
+//        if (i == 0) {
+//          System.out.print("[" + array[0] + ", ");
+//        } else if (i == length - 1) {
+//          System.out.print(array[length - 1] + "]");
+//        } else {
+//          System.out.print(array[i] + ", ");
+//        }
+//      }
+//    }
+//  }
 }

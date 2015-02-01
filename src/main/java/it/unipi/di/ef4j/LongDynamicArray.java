@@ -124,28 +124,28 @@ public final class LongDynamicArray implements Iterable<Long> {
     return length;
   }
 
-  /**
-   * Print all the items in the collection. Useful for debugging.
-   */
-  public void print() {
-    final int length = this.length;
-    if (length == 0) {
-      System.out.print("/");
-    }
-    if (length == 1) {
-      System.out.print("[" + array[0] + "]");
-    } else {
-      for (int i = 0; i < length; i++) {
-        if (i == 0) {
-          System.out.print("[" + array[0] + ", ");
-        } else if (i == length - 1) {
-          System.out.print(array[length - 1] + "]");
-        } else {
-          System.out.print(array[i] + ", ");
-        }
-      }
-    }
-  }
+//  /**
+//   * Print all the items in the collection. Useful for debugging.
+//   */
+//  public void print() {
+//    final int length = this.length;
+//    if (length == 0) {
+//      System.out.print("/");
+//    }
+//    if (length == 1) {
+//      System.out.print("[" + array[0] + "]");
+//    } else {
+//      for (int i = 0; i < length; i++) {
+//        if (i == 0) {
+//          System.out.print("[" + array[0] + ", ");
+//        } else if (i == length - 1) {
+//          System.out.print(array[length - 1] + "]");
+//        } else {
+//          System.out.print(array[i] + ", ");
+//        }
+//      }
+//    }
+//  }
 
   /**
    * Returns the allocated capacity for the array.
@@ -241,7 +241,6 @@ public final class LongDynamicArray implements Iterable<Long> {
       next = 0;
       N = length;
     }
-
 
     @Override
     public boolean hasNext() {

@@ -1,7 +1,6 @@
 package it.unipi.di;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertArrayEquals;
 
@@ -207,7 +206,8 @@ public class EliasFanoAppendOnlyMonotoneLongSequenceTest {
     assertArrayEquals(subList.toArray(), new Long[] {2L, 3L, 4L, 5L, 6L});
 
     assertEquals((long) s.nextGEQ(0L), 0L);
-    assertEquals((long) s.nextGEQ(7L), 7L);
+    assertEquals((long) s.nextGEQ(4L), 4L);
+    assertEquals((long) s.nextGEQ(3L), 3L);
     assertEquals((long) s.nextGEQ(10L), -1);
 
     s.add(23L);
@@ -326,137 +326,5 @@ public class EliasFanoAppendOnlyMonotoneLongSequenceTest {
     buildSequence();
     s.add(s.last);
     assertEquals(s.lastIndexOf(s.last), s.size() - 1);
-  }
-
-  @Test
-  public void testAddIntLong() {
-    buildSequence();
-    try {
-      s.add((int) (Math.random() * (s.size() - 1)), 23L);
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testAddAllIntCollectionOfQextendsLong() {
-    buildSequence();
-
-    ArrayList<Long> l = new ArrayList<Long>();
-    l.add(0L);
-    l.add(1L);
-    l.add(2L);
-    l.add(3L);
-    l.add(4L);
-
-    try {
-      s.addAll((int) (Math.random() * (s.size() - 1)), l);
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testRemoveObject() {
-    buildSequence();
-    try {
-      s.remove((long) (Math.random() * s.last));
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testRemoveInt() {
-    buildSequence();
-    try {
-      s.remove((int) (Math.random() * (s.size() - 1)));
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testRemoveAll() {
-    buildSequence();
-    ArrayList<Long> l = new ArrayList<Long>();
-    long last = s.last;
-    l.add(last++);
-    l.add(last++);
-    l.add(last++);
-    l.add(last++);
-    l.add(last++);
-    try {
-      s.removeAll(l);
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testRetainAll() {
-    buildSequence();
-    ArrayList<Long> l = new ArrayList<Long>();
-    long last = s.last;
-    l.add(last++);
-    l.add(last++);
-    l.add(last++);
-    l.add(last++);
-    l.add(last++);
-    try {
-      s.retainAll(l);
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testSet() {
-    buildSequence();
-    try {
-      s.set((int) (Math.random() * (s.size() - 1)), (long) (Math.random() * s.last));
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testToArrayTArray() {
-    buildSequence();
-    try {
-      s.toArray(new Long[100]);
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testListIterator() {
-    buildSequence();
-    try {
-      s.listIterator();
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
-  }
-
-  @Test
-  public void testListIteratorInt() {
-    buildSequence();
-    try {
-      s.listIterator((int) (Math.random() * (s.size() - 1)));
-    } catch (UnsupportedOperationException e) {
-      assertTrue(true);
-    }
-    assertFalse(false);
   }
 }
