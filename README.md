@@ -1,6 +1,7 @@
-# ef4j - Elias-Fano Succinct data structures for Java
+# ef4j - Elias-Fano Succinct Data Structures for Java
 
-This is the folder containing all source codes for the author’s Master Thesis.
+This project was developed as part of the Author's Master Thesis.
+
 Java code formatting adheres to the [style rules](https://google-styleguide.googlecode.com/svn/trunk/javaguide.html) of Google.
 - - - -
 
