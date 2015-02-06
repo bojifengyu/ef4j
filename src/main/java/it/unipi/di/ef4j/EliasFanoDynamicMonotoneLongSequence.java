@@ -160,7 +160,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
 
   @Override
   public Long nextGEQ(final long integer) {
-    int bucket = integer > 0 ? s.binarySearchOverInfo(integer, 0, s.buckets + 1) : 0;
+    int bucket = integer > 0 ? s.binarySearchOverInfo(integer) : 0;
     Iterator<Long> it;
     if (dynamic) {
       it = iterator(bucket);
@@ -540,7 +540,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
         s.buffer[s.N++] = integer;
         s.last = integer;
       } else {
-        bucket = s.binarySearchOverInfo(integer, 0, s.buckets + 1);
+        bucket = s.binarySearchOverInfo(integer);
         index = indices.get(bucket);
         insert(index.additions, integer); // insertion in order in additions index
         
@@ -591,7 +591,7 @@ public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotone
       if (integer == s.last && s.N > 0) {
         s.N--; // just remove last element from buffer
       } else {
-        final int bucket = s.binarySearchOverInfo(integer, 0, s.buckets + 1);
+        final int bucket = s.binarySearchOverInfo(integer);
         Index index = indices.get(bucket);
         insert(index.deletions, integer); // insertion in order in deletions index
         sizes.decr(bucket);
