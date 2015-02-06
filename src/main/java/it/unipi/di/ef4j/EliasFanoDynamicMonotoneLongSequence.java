@@ -47,7 +47,7 @@ import java.util.ArrayList;
  * @author Giulio Ermanno Pibiri
  */
 public final class EliasFanoDynamicMonotoneLongSequence extends AbstractMonotoneLongSequence
-    implements RandomAccess, Cloneable, Serializable {
+    implements Cloneable, Serializable {
   // Serial ID number.
   private transient static final long serialVersionUID = 8102012L;
 

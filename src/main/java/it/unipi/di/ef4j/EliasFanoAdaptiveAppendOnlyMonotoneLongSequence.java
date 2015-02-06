@@ -40,7 +40,7 @@ import it.unimi.dsi.bits.Fast;
  * @author Giulio Ermanno Pibiri
  */
 public final class EliasFanoAdaptiveAppendOnlyMonotoneLongSequence extends
-    AbstractAppendOnlyMonotoneLongSequence implements RandomAccess, Cloneable, Serializable {
+    AbstractAppendOnlyMonotoneLongSequence implements Cloneable, Serializable {
   // Serial ID number.
   private transient static final long serialVersionUID = 26092009L;
 

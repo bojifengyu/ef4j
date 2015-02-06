@@ -45,7 +45,7 @@ import it.unimi.dsi.sux4j.bits.SimpleSelect;
  * @author Giulio Ermanno Pibiri
  */
 public final class EliasFanoAppendOnlyMonotoneLongSequence extends
-    AbstractAppendOnlyMonotoneLongSequence implements RandomAccess, Cloneable, Serializable {
+    AbstractAppendOnlyMonotoneLongSequence implements Cloneable, Serializable {
   // Serial ID number.
   private transient static final long serialVersionUID = 13071990L;
 
