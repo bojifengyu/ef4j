@@ -19,7 +19,6 @@ package it.unipi.di;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import it.unimi.dsi.bits.BitVector;
 import it.unimi.dsi.bits.Fast;
@@ -222,51 +221,48 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends
 
     @Override
     public Long next() {
-      if (hasNext()) {
-        if (next % b == 0) {
-          offset = 0;
-          nextOne = -1;
-          ones = 0;
+      if (next % b == 0) {
+        offset = 0;
+        nextOne = -1;
+        ones = 0;
 
-          if (bucket < buckets) {
-            selector = selectors.get(bucket);
-            final long lu = info.array[bucket];
-            l = lu & LOWER_BITS_MASK;
-            u = (lu & UPPER_BITS_MASK) >> 6;
-            lowerBitsMask = (1L << l) - 1;
-            lowerBitsVector = lowerBits.get(bucket);
-          }
-          bucket++;
+        if (bucket < buckets) {
+          selector = selectors.get(bucket);
+          final long lu = info.array[bucket];
+          l = lu & LOWER_BITS_MASK;
+          u = (lu & UPPER_BITS_MASK) >> 6;
+          lowerBitsMask = (1L << l) - 1;
+          lowerBitsVector = lowerBits.get(bucket);
         }
+        bucket++;
+      }
 
-        if (bucket == buckets + 1) {
-          return buffer[next++ % b];
-        }
+      if (bucket == buckets + 1) {
+        return buffer[next++ % b];
+      }
 
-        nextOne = selector.bitVector().nextOne(nextOne + 1);
-        upperBits = nextOne - ones++;
+      nextOne = selector.bitVector().nextOne(nextOne + 1);
+      upperBits = nextOne - ones++;
 
-        if (l == 0) {
-          next++;
-          offset++;
-          return upperBits + u;
-        }
-
-        final long lowerBitsPosition = offset * l;
-        final int startWord = (int) (lowerBitsPosition / LONG_SIZE);
-        final int startBit = (int) (lowerBitsPosition % LONG_SIZE);
-        final long totalOffset = startBit + l;
-        final long result = lowerBitsVector[startWord] >>> startBit;
-
+      if (l == 0) {
         next++;
         offset++;
-
-        return (upperBits << l | (totalOffset <= LONG_SIZE ? result : result
-            | lowerBitsVector[startWord + 1] << -startBit)
-            & lowerBitsMask)
-            + u;
+        return upperBits + u;
       }
-      throw new NoSuchElementException("Element not present.");
+
+      final long lowerBitsPosition = offset * l;
+      final int startWord = (int) (lowerBitsPosition / LONG_SIZE);
+      final int startBit = (int) (lowerBitsPosition % LONG_SIZE);
+      final long totalOffset = startBit + l;
+      final long result = lowerBitsVector[startWord] >>> startBit;
+
+      next++;
+      offset++;
+
+      return (upperBits << l | (totalOffset <= LONG_SIZE ? result : result
+          | lowerBitsVector[startWord + 1] << -startBit)
+          & lowerBitsMask)
+          + u;
     }
 
     @Override
@@ -368,15 +364,50 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends
 
   @Override
   public Long nextGEQ(final long integer) {
-    final int pos = binarySearchOverInfo(integer);
-    Iterator<Long> it = this.iterator(pos);
-    while (it.hasNext()) {
-      long v = it.next();
-      if (v >= integer) {
-        return v;
+//    final int pos = binarySearchOverInfo(integer);
+    return binarySearchOverBucket(binarySearchOverInfo(integer), integer);
+//    Iterator<Long> it = this.iterator(pos);
+//    while (it.hasNext()) {
+//      long v = it.next();
+//      if (v >= integer) {
+//        return v;
+//      }
+//    }
+//    return -1L;
+  }
+  
+  // Binary search over info array.
+  protected long binarySearchOverBucket(final int bucket, final long integer) {
+    final long first = get(bucket, 0);
+    if (integer <= first) {
+      return first;
+    }
+    final long last = bucket == buckets ? this.last : get(bucket, B - 1);
+    if (integer == last) {
+      return last;
+    }
+    if (integer > last) {
+      return -1L;
+    }
+    
+    int lo = 0;
+    int hi = bucket == buckets ? N - 1 : B - 1;
+    
+    while (lo <= hi) {
+      final int mid = lo + (hi - lo >> 1);
+      final long u = get(bucket, mid);
+      if (integer > u) {
+        lo = mid + 1;
+      }
+      else if (integer < u) {
+        hi = mid - 1;
+      }
+      else {
+        return u;
       }
     }
-    return -1L;
+     
+    return get(bucket, lo);
   }
   
   // Binary search over info array.
@@ -392,7 +423,7 @@ public final class EliasFanoAppendOnlyMonotoneLongSequence extends
     int hi = buckets;
     
     while (lo <= hi) {
-      final int mid = lo + (hi - lo) / 2;
+      final int mid = lo + (hi - lo >> 1);
       final long u1 = (info.array[mid] & UPPER_BITS_MASK) >> 6;
       if (integer == u1) {
         return mid - 1;
